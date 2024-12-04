@@ -2,4 +2,4 @@ git status
 git add *
 git commit -a
 git push
-read -p
+read -p "Press any key to exit"
