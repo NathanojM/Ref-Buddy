@@ -34,7 +34,8 @@ import shutil
 import time
 import threading
 
-################### Clean out old output files #######
+
+################ Remove old outputs ##################
 def clean():
     os.system("rm *.txt")
     os.system("rm *.mp3")
@@ -111,7 +112,7 @@ def load():
         "RefOverride":[""]}
 
         #mod add new fields to this list
-        projfiles={"Project":["Panspermia"],"File":["./Sample Document.odt"],"Default":True}
+        projfiles={"Project":["Panspermia"],"File":["/home/jonathan/Documents/University/Course notes/Home/Biology/Palaeontology/Panspermia/Panspermia expanded.odt"],"Default":True}
 
     t=pd.DataFrame(data)
     files=pd.DataFrame(projfiles)
@@ -454,10 +455,10 @@ def splash(event=None):
     global splashwin
     splashwin=Tk()
     splashwin.overrideredirect(True)
-    logo=PhotoImage(file='./Logo.png').subsample(1)
+    logo=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Ref/Logo.png').subsample(1)
     splashlabel=Button(splashwin,text="test",image=logo,relief="flat")
     splashlabel.pack()
-    splashwin.after(3000, makewin)
+    splashwin.after(0, makewin)
     splashwin.mainloop()
 
 
@@ -526,6 +527,8 @@ rootwin.bind("<Insert>",inscheck)
 boxframe=Frame(rootwin,bg=bgcolor)
 boxframe.grid(row=1,column=0)
 
+
+
 def makebox():
     return Entry(boxframe,relief="flat",borderwidth=-1,highlightthickness=-1,background=accentcolor2,font=entrystyle,width=40)
 titlebox=makebox()
@@ -561,42 +564,45 @@ customref=makebox()
 #mod: insert new box here
 
 
-boxes=[{'box':titlebox,"text":"Title","book":True,"journal":True,"web":True,"data":True,"ed":True,"chap":True,"conf":True,"cap":True,"unpub":True,"custom":False,"field":"Title"},
-       {'box':editionbox,"text":"Edition","book":True,"journal":False,"web":False,"data":False,"ed":False,"chap":True,"conf":False,"cap":False,"unpub":True,"custom":False,"field":"Edition"},
-       {'box':surnamebox,"text":"Surname","book":True,"journal":True,"web":False,"data":False,"ed":False,"chap":False,"conf":True,"cap":False,"unpub":True,"custom":False,"field":None},
-       {'box':initialbox,"text":"Initials","book":True,"journal":True,"web":False,"data":False,"ed":True,"chap":False,"conf":True,"cap":False,"unpub":True,"custom":False,"field":None},
-       {'box':edsurnamebox,"text":"Ed. Surname","book":False,"journal":True,"web":False,"data":False,"ed":True,"chap":True,"conf":True,"cap":False,"unpub":True,"custom":False,"field":None},
-       {'box':edinitialbox,"text":"Ed. Initials","book":False,"journal":True,"web":False,"data":False,"ed":True,"chap":True,"conf":True,"cap":False,"unpub":True,"custom":False,"field":None},
-        {'box':chapsurnamebox,"text":"Chap. Surname","book":False,"journal":False,"web":False,"data":False,"ed":False,"chap":True,"conf":False,"cap":True,"unpub":True,"custom":False,"field":None},
-       {'box':chapinitialbox,"text":"Chap. Initials","book":False,"journal":False,"web":False,"data":False,"ed":False,"chap":True,"conf":False,"cap":True,"unpub":True,"custom":False,"field":None},
-       {'box':chaptitlebox,"text":"Chap. Title","book":False,"journal":False,"web":False,"data":False,"ed":False,"chap":True,"conf":False,"cap":True,"unpub":True,"custom":False,"field":"Chap_Title"},
-    {'box':pubbox,"text":"Publisher","book":True,"journal":False,"web":False,"data":False,"ed":True,"chap":True,"conf":False,"cap":True,"unpub":True,"custom":False,"field":"Publisher"},
-       {'box':citybox,"text":"City","book":True,"journal":False,"web":False,"data":False,"ed":True,"chap":True,"conf":False,"cap":True,"unpub":True,"custom":False,"field":"CityOfPub"},
-       {'box':yearbox,"text":"Year","book":True,"journal":True,"web":True,"data":True,"ed":True,"chap":True,"conf":True,"cap":False,"unpub":True,"custom":False,"field":"Year"},
-       {'box':journalbox,"text":"Journal","book":False,"journal":True,"web":False,"data":False,"ed":False,"chap":False,"conf":False,"cap":True,"unpub":True,"custom":False,"field":"Journal"},
-       {'box':volbox,"text":"Volume","book":False,"journal":True,"web":False,"data":False,"ed":False,"chap":False,"conf":False,"cap":False,"unpub":True,"custom":False,"field":"Volume"},
-       {'box':issuebox,"text":"Issue","book":False,"journal":True,"web":False,"data":False,"ed":False,"chap":False,"conf":False,"cap":False,"unpub":True,"custom":False,"field":"Issue"},
-       {'box':pagesbox,"text":"Pages","book":False,"journal":True,"web":False,"data":False,"ed":False,"chap":True,"conf":True,"cap":False,"unpub":True,"custom":False,"field":"Pages"},
-       {'box':urlbox,"text":"URL","book":True,"journal":True,"web":True,"data":True,"ed":True,"chap":True,"conf":True,"cap":False,"unpub":True,"custom":False,"field":"URL"},
-       {'box':orgbox,"text":"Org.","book":False,"journal":False,"web":True,"data":True,"ed":False,"chap":False,"conf":False,"cap":True,"unpub":True,"custom":False,"field":"Organisation"},
-       {'box':accessbox,"text":"Accessed","book":True,"journal":True,"web":True,"data":True,"ed":True,"chap":True,"conf":True,"cap":True,"unpub":True,"custom":False,"field":"DateAccessed"},
-       {'box':writtenbox,"text":"Written","book":False,"journal":False,"web":True,"data":True,"ed":False,"chap":False,"conf":False,"cap":True,"unpub":True,"custom":False,"field":"DateWritten"},
-       {'box':conference_place_box,"text":"Conference Place","book":False,"journal":False,"web":False,"data":False,"ed":False,"chap":False,"conf":True,"cap":True,"unpub":True,"custom":False,"field":"Place_Conf"},
-       {'box':conference_title_box,"text":"Conference Name","book":False,"journal":False,"web":False,"data":False,"ed":False,"chap":False,"conf":True,"cap":True,"unpub":True,"custom":False,"field":"Name_Conf"},
-       {'box':conference_date_box,"text":"Conference Date","book":False,"journal":False,"web":False,"data":False,"ed":False,"chap":False,"conf":True,"cap":True,"unpub":True,"custom":False,"field":"Date_Conf"},
-       {'box':PDFbox,"text":"PDF","book":True,"journal":True,"web":True,"data":True,"ed":True,"chap":True,"conf":True,"cap":True,"unpub":True,"custom":False,"field":"PDF"},
-       {'box':notesbox,"text":"Notes","book":True,"journal":True,"web":True,"data":True,"ed":True,"chap":True,"conf":True,"cap":True,"unpub":True,"custom":False,"field":"Notes"},
-       {'box':customcite,"text":"Custom Citation","book":False,"journal":False,"web":False,"data":False,"ed":False,"chap":False,"conf":False,"cap":False,"unpub":False,"custom":True,"field":"CiteOverride"},
-       {'box':customref,"text":"Custom Reference","book":False,"journal":False,"web":False,"data":False,"ed":False,"chap":False,"conf":False,"cap":False,"unpub":False,"custom":True,"field":"RefOverride"}]
+boxes=[{'box':titlebox,"text":"Title","book":True,"journal":True,"web":True,"data":True,"ed":True,"chap":True,"conf":True,"cap":True,"unpub":True,"custom":False,"None":False,"field":"Title"},
+       {'box':editionbox,"text":"Edition","book":True,"journal":False,"web":False,"data":False,"ed":False,"chap":True,"conf":False,"cap":False,"unpub":True,"custom":False,"None":False,"field":"Edition"},
+       {'box':surnamebox,"text":"Surname","book":True,"journal":True,"web":False,"data":False,"ed":False,"chap":False,"conf":True,"cap":False,"unpub":True,"custom":False,"None":False,"field":None},
+       {'box':initialbox,"text":"Initials","book":True,"journal":True,"web":False,"data":False,"ed":True,"chap":False,"conf":True,"cap":False,"unpub":True,"custom":False,"None":False,"field":None},
+       {'box':edsurnamebox,"text":"Ed. Surname","book":False,"journal":False,"web":False,"data":False,"ed":True,"chap":True,"conf":True,"cap":False,"unpub":True,"custom":False,"None":False,"field":None},
+       {'box':edinitialbox,"text":"Ed. Initials","book":False,"journal":False,"web":False,"data":False,"ed":True,"chap":True,"conf":True,"cap":False,"unpub":True,"custom":False,"None":False,"field":None},
+        {'box':chapsurnamebox,"text":"Chap. Surname","book":False,"journal":False,"web":False,"data":False,"ed":False,"chap":True,"conf":False,"cap":True,"unpub":True,"custom":False,"None":False,"field":None},
+       {'box':chapinitialbox,"text":"Chap. Initials","book":False,"journal":False,"web":False,"data":False,"ed":False,"chap":True,"conf":False,"cap":True,"unpub":True,"custom":False,"None":False,"field":None},
+       {'box':chaptitlebox,"text":"Chap. Title","book":False,"journal":False,"web":False,"data":False,"ed":False,"chap":True,"conf":False,"cap":True,"unpub":True,"custom":False,"None":False,"field":"Chap_Title"},
+    {'box':pubbox,"text":"Publisher","book":True,"journal":False,"web":False,"data":False,"ed":True,"chap":True,"conf":False,"cap":True,"unpub":True,"custom":False,"None":False,"field":"Publisher"},
+       {'box':citybox,"text":"City","book":True,"journal":False,"web":False,"data":False,"ed":True,"chap":True,"conf":False,"cap":True,"unpub":True,"custom":False,"None":False,"field":"CityOfPub"},
+       {'box':yearbox,"text":"Year","book":True,"journal":True,"web":True,"data":True,"ed":True,"chap":True,"conf":True,"cap":False,"unpub":True,"custom":False,"None":False,"field":"Year"},
+       {'box':journalbox,"text":"Journal","book":False,"journal":True,"web":False,"data":False,"ed":False,"chap":False,"conf":False,"cap":True,"unpub":True,"custom":False,"None":False,"field":"Journal"},
+       {'box':volbox,"text":"Volume","book":False,"journal":True,"web":False,"data":False,"ed":False,"chap":False,"conf":False,"cap":False,"unpub":True,"custom":False,"None":False,"field":"Volume"},
+       {'box':issuebox,"text":"Issue","book":False,"journal":True,"web":False,"data":False,"ed":False,"chap":False,"conf":False,"cap":False,"unpub":True,"custom":False,"None":False,"field":"Issue"},
+       {'box':pagesbox,"text":"Pages","book":False,"journal":True,"web":False,"data":False,"ed":False,"chap":True,"conf":True,"cap":False,"unpub":True,"custom":False,"None":False,"field":"Pages"},
+       {'box':urlbox,"text":"URL","book":True,"journal":True,"web":True,"data":True,"ed":True,"chap":True,"conf":True,"cap":False,"unpub":True,"custom":False,"None":False,"field":"URL"},
+       {'box':orgbox,"text":"Org.","book":False,"journal":False,"web":True,"data":True,"ed":False,"chap":False,"conf":False,"cap":True,"unpub":True,"custom":False,"None":False,"field":"Organisation"},
+       {'box':accessbox,"text":"Accessed","book":True,"journal":True,"web":True,"data":True,"ed":True,"chap":True,"conf":True,"cap":True,"unpub":True,"custom":False,"None":False,"field":"DateAccessed"},
+       {'box':writtenbox,"text":"Written","book":False,"journal":False,"web":True,"data":True,"ed":False,"chap":False,"conf":False,"cap":True,"unpub":True,"custom":False,"None":False,"field":"DateWritten"},
+       {'box':conference_place_box,"text":"Conference Place","book":False,"journal":False,"web":False,"data":False,"ed":False,"chap":False,"conf":True,"cap":True,"unpub":True,"custom":False,"None":False,"field":"Place_Conf"},
+       {'box':conference_title_box,"text":"Conference Name","book":False,"journal":False,"web":False,"data":False,"ed":False,"chap":False,"conf":True,"cap":True,"unpub":True,"custom":False,"None":False,"field":"Name_Conf"},
+       {'box':conference_date_box,"text":"Conference Date","book":False,"journal":False,"web":False,"data":False,"ed":False,"chap":False,"conf":True,"cap":True,"unpub":True,"custom":False,"None":False,"field":"Date_Conf"},
+       {'box':PDFbox,"text":"PDF","book":True,"journal":True,"web":True,"data":True,"ed":True,"chap":True,"conf":True,"cap":True,"unpub":True,"custom":False,"None":False,"field":"PDF"},
+       {'box':notesbox,"text":"Notes","book":True,"journal":True,"web":True,"data":True,"ed":True,"chap":True,"conf":True,"cap":True,"unpub":True,"custom":False,"None":False,"field":"Notes"},
+       {'box':customcite,"text":"Custom Citation","book":False,"journal":False,"web":False,"data":False,"ed":False,"chap":False,"conf":False,"cap":False,"unpub":False,"custom":True,"None":False,"field":"CiteOverride"},
+       {'box':customref,"text":"Custom Reference","book":False,"journal":False,"web":False,"data":False,"ed":False,"chap":False,"conf":False,"cap":False,"unpub":False,"custom":True,"None":False,"field":"RefOverride"}]
         #mod: insert new box here
         #mod book,web,data field etc indicates whether it should show up for that medium. Add a new key for any new medium.
 
 
 
 
+
 for x in boxes:
+    x["default"]=str(x["text"])
     x["text"]=Label(boxframe,text=x["text"],bg="aliceblue",justify="right",font=labelstyle)
     x["box"].bind("<1>",insclick)
+ 
 
 
 
@@ -619,11 +625,18 @@ def refresh(forwhat):
     global eilist
     global csurnamelist
     global cilist
+    global authorframe
+    global editorframe
+    global chapterframe
+
     r=1
     for x in boxes:
         if x[forwhat]==True:
             x["text"].grid(row=r,column=0,sticky="w")
             x["box"].grid(row=r,column=1)
+            
+            
+
             #x["box"].insert(0,x["text"])
             r=r+1
 
@@ -688,6 +701,13 @@ def unpub(event=None):
     citenew("unpub")
 def custom(event=None):
     citenew("custom")
+def minimise(event=None):
+    citenew("None")
+    authorframe.grid_forget()
+    editorframe.grid_forget()
+    chapterframe.grid_forget()
+    ribbon.select(filetab)
+
 #mod add function here
 
 #################### Link PDF of paper to reference ################
@@ -724,8 +744,6 @@ def reset(event=None):
             pass
         widget.grid_forget()
 
-def minimise(event=None):
-    rootwin.geometry("800x100")
 
 
 ###################### Assemble the citation into the right syntax #########################
@@ -1179,59 +1197,59 @@ def makeribbon():
     ############### Load icons for buttons ##################
     global delpersonicon
     global removeallauthors
-    addauthoricon=PhotoImage(file='./Icons/addauthoricon.png').subsample(1)
-    bookicon=PhotoImage(file='./Icons/bookicon.png').subsample(1)
-    copyciteicon=PhotoImage(file='./Icons/copyciteicon.png').subsample(1)
-    copyicon=PhotoImage(file='./Icons/copyicon.png').subsample(1)
-    copyindexicon=PhotoImage(file='./Icons/copyindexicon.png').subsample(1)
-    copyreficon=PhotoImage(file='./Icons/copyreficon.png').subsample(1)
-    csvicon=PhotoImage(file='./Icons/csvicon.png').subsample(1)
-    delicon=PhotoImage(file='./Icons/delicon.png').subsample(1)
-    delpersonicon=PhotoImage(file='./Icons/delpersonicon.png').subsample(1)
-    exporticon=PhotoImage(file='./Icons/exporticon.png').subsample(1)
-    googleicon=PhotoImage(file='./Icons/googleicon.png').subsample(1)
-    hideicon=PhotoImage(file='./Icons/hideicon.png').subsample(1)
-    journalicon=PhotoImage(file='./Icons/journalicon.png').subsample(1)
-    lockicon=PhotoImage(file='./Icons/lockicon.png').subsample(1)
-    maximiseicon=PhotoImage(file='./Icons/maximiseicon.png').subsample(1)
-    maximiseicon=PhotoImage(file='./Icons/maximiseicon.png').subsample(1)
-    minimiseicon=PhotoImage(file='./Icons/minimiseicon.png').subsample(1)
-    minimiseicon=PhotoImage(file='./Icons/minimiseicon.png').subsample(1)
-    newicon=PhotoImage(file='./Icons/newicon.png').subsample(1)
-    newicon=PhotoImage(file='./Icons/newicon.png').subsample(1)
-    notepadicon=PhotoImage(file='./Icons/notepadicon.png').subsample(1)
-    pdficon=PhotoImage(file='./Icons/pdficon.png').subsample(1)
-    reloadicon=PhotoImage(file='./Icons/reloadicon.png').subsample(1)
-    reloadicon=PhotoImage(file='./Icons/reloadicon.png').subsample(1)
-    removeallauthors=PhotoImage(file='./Icons/removeallauthors.png').subsample(1)
-    showallicon=PhotoImage(file='./Icons/showallicon.png').subsample(1)
-    showicon=PhotoImage(file='./Icons/showicon.png').subsample(1)
-    showicon=PhotoImage(file='./Icons/showicon.png').subsample(1)
-    sortauthoricon=PhotoImage(file='./Icons/sortauthoricon.png').subsample(1)
-    sortdatedescicon=PhotoImage(file='./Icons/sortdatedescicon.png').subsample(1)
-    sortdownicon=PhotoImage(file='./Icons/sortdownicon.png').subsample(1)
-    sorttitleicon=PhotoImage(file='./Icons/sorttitleicon.png').subsample(1)
-    sortupicon=PhotoImage(file='./Icons/sortupicon.png').subsample(1)
-    soundicon=PhotoImage(file='./Icons/soundicon.png').subsample(1)
-    switchicon=PhotoImage(file='./Icons/switchicon.png').subsample(1)
-    switchicon=PhotoImage(file='./Icons/switchicon.png').subsample(1)
-    txticon=PhotoImage(file='./Icons/txticon.png').subsample(1)
-    urlicon=PhotoImage(file='./Icons/urlicon.png').subsample(1)
-    wordicon=PhotoImage(file='./Icons/wordicon.png').subsample(1)
-    writeicon=PhotoImage(file='./Icons/writeicon.png').subsample(1)
-    accessicon=PhotoImage(file='./Icons/accessicon.png').subsample(1)
-    noaccessicon=PhotoImage(file='./Icons/noaccessicon.png').subsample(1)
-    usedicon=PhotoImage(file='./Icons/usedicon.png').subsample(1)
-    unusedicon=PhotoImage(file='./Icons/unusedicon.png').subsample(1)
-    redaicon=PhotoImage(file='./Icons/redaicon.png').subsample(1)
-    greenaicon=PhotoImage(file='./Icons/greenaicon.png').subsample(1)
-    dataicon=PhotoImage(file='./Icons/dataset.png').subsample(1)
-    conficon=PhotoImage(file='./Icons/conf.png').subsample(1)
-    edbookicon=PhotoImage(file='./Icons/edbookicon.png').subsample(1)
-    chapicon=PhotoImage(file='./Icons/chaptericon.png').subsample(1)
-    unpubicon=PhotoImage(file='./Icons/unpubicon.png').subsample(1)
-    pinicon=PhotoImage(file='./Icons/pinicon.png').subsample(1)
-    customicon=PhotoImage(file='./Icons/customicon.png').subsample(1)
+    addauthoricon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/addauthoricon.png').subsample(1)
+    bookicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/bookicon.png').subsample(1)
+    copyciteicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/copyciteicon.png').subsample(1)
+    copyicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/copyicon.png').subsample(1)
+    copyindexicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/copyindexicon.png').subsample(1)
+    copyreficon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/copyreficon.png').subsample(1)
+    csvicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/csvicon.png').subsample(1)
+    delicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/delicon.png').subsample(1)
+    delpersonicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/delpersonicon.png').subsample(1)
+    exporticon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/exporticon.png').subsample(1)
+    googleicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/googleicon.png').subsample(1)
+    hideicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/hideicon.png').subsample(1)
+    journalicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/journalicon.png').subsample(1)
+    lockicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/lockicon.png').subsample(1)
+    maximiseicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/maximiseicon.png').subsample(1)
+    maximiseicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/maximiseicon.png').subsample(1)
+    minimiseicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/minimiseicon.png').subsample(1)
+    minimiseicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/minimiseicon.png').subsample(1)
+    newicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/newicon.png').subsample(1)
+    newicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/newicon.png').subsample(1)
+    notepadicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/notepadicon.png').subsample(1)
+    pdficon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/pdficon.png').subsample(1)
+    reloadicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/reloadicon.png').subsample(1)
+    reloadicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/reloadicon.png').subsample(1)
+    removeallauthors=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/removeallauthors.png').subsample(1)
+    showallicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/showallicon.png').subsample(1)
+    showicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/showicon.png').subsample(1)
+    showicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/showicon.png').subsample(1)
+    sortauthoricon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/sortauthoricon.png').subsample(1)
+    sortdatedescicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/sortdatedescicon.png').subsample(1)
+    sortdownicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/sortdownicon.png').subsample(1)
+    sorttitleicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/sorttitleicon.png').subsample(1)
+    sortupicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/sortupicon.png').subsample(1)
+    soundicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/soundicon.png').subsample(1)
+    switchicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/switchicon.png').subsample(1)
+    switchicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/switchicon.png').subsample(1)
+    txticon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/txticon.png').subsample(1)
+    urlicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/urlicon.png').subsample(1)
+    wordicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/wordicon.png').subsample(1)
+    writeicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/writeicon.png').subsample(1)
+    accessicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/accessicon.png').subsample(1)
+    noaccessicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/noaccessicon.png').subsample(1)
+    usedicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/usedicon.png').subsample(1)
+    unusedicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/unusedicon.png').subsample(1)
+    redaicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/redaicon.png').subsample(1)
+    greenaicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/greenaicon.png').subsample(1)
+    dataicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/dataset.png').subsample(1)
+    conficon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/conf.png').subsample(1)
+    edbookicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/edbookicon.png').subsample(1)
+    chapicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/chaptericon.png').subsample(1)
+    unpubicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/unpubicon.png').subsample(1)
+    pinicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/pinicon.png').subsample(1)
+    customicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/customicon.png').subsample(1)
     #mod add path to new icon here
 
 
@@ -1244,6 +1262,7 @@ def makeribbon():
              {"image":csvicon,"img":"𝓧","name":"Open list as .csv","short":"<Control-O>","command":export_as_csv,"menu":opengroup, "row":1,"col":0},
              {"image":wordicon,"img":"Ｗ","name":"Open Project","short":None,"short2":None,"command":openfile,"menu":projgroup, "row":1,"col":0},
              {"image":switchicon,"img":"⥂","name":"Change Project File","short":None,"short2":None,"command":changefile,"menu":projgroup, "row":1,"col":1},
+             {"image":minimiseicon,"img":"","name":"Minimise","short":"<Escape>","short2":None,"command":minimise,"menu":filegroup, "row":1,"col":10},
              
              
              {"img":"🔎","name":"Find","short":"<Control-f>","short2":"<Control-F>","command":search,"menu":listgroup, "row":1,"col":100},
@@ -1309,11 +1328,13 @@ def makeribbon():
             pass
 
 
+
 load()
 makeribbon()
 list_projects()
 list_citations()
 loadfile()
 rootwin.bind("<Tab>",inscheck)
-book()
+
+#book()
 rootwin.mainloop()
