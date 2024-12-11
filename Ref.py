@@ -248,7 +248,8 @@ def change_proj(event=None):
 
     curproj.set(projdrop.cget("text"))
     list_citations()
-
+    loadfile()
+    
 def confdrop(x):
     x.config(bg=btncolor,fg="black")
     x["highlightthickness"]=0
@@ -593,7 +594,7 @@ def makefields():
            {'box':urlbox,"text":"URL","book":1,"journal":1,"web":1,"data":1,"ed":1,"chap":1,"conf":1,"cap":0,"unpub":1,"custom":0,"None":0,"field":"URL"},
            {'box':orgbox,"text":"Org.","book":0,"journal":0,"web":1,"data":1,"ed":0,"chap":0,"conf":0,"cap":1,"unpub":1,"custom":0,"None":0,"field":"Organisation"},
            {'box':accessbox,"text":"Accessed","book":1,"journal":1,"web":1,"data":1,"ed":1,"chap":1,"conf":1,"cap":1,"unpub":1,"custom":0,"None":0,"field":"DateAccessed"},
-           {'box':writtenbox,"text":"Written","book":0,"journal":0,"web":1,"data":1,"ed":0,"chap":0,"conf":0,"cap":1,"unpub":1,"custom":0,"None":0,"field":"DateWritten"},
+           {'box':writtenbox,"text":"Written","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":0,"conf":0,"cap":1,"unpub":1,"custom":0,"None":0,"field":"DateWritten"},
            {'box':conference_place_box,"text":"Conference Place","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":0,"conf":1,"cap":1,"unpub":1,"custom":0,"None":0,"field":"Place_Conf"},
            {'box':conference_title_box,"text":"Conference Name","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":0,"conf":1,"cap":1,"unpub":1,"custom":0,"None":0,"field":"Name_Conf"},
            {'box':conference_date_box,"text":"Conference Date","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":0,"conf":1,"cap":1,"unpub":1,"custom":0,"None":0,"field":"Date_Conf"},
