@@ -271,9 +271,10 @@ def list_projects():
         pass
 
     projframe=Frame(filegroup)
-    projframe.grid(row=0,column=0,columnspan=3,padx=10,pady=10)
+    projframe.grid(row=0,column=0,columnspan=30,padx=10,pady=10)
 
     projdrop=OptionMenu(projframe,curproj,*projects,command=change_proj)
+    projdrop.grid(row=0,column=0,columnspan=30)
     projdrop.grid(row=0,column=0,columnspan=30)
     confdrop(projdrop)
 
@@ -353,13 +354,15 @@ def list_citations():
     citation.set(citations[0])
 
     refdrop=OptionMenu(listgroup,ref,*refs,command=sync_ref)
-    citedrop.configure(width=30)
-    refdrop.configure(width=30)
+    #citedrop.configure(width=30)
+    #refdrop.configure(width=30)
     refdrop.grid(row=1,column=0,sticky="w")
     ref.set(refs[0])
 
     confdrop(refdrop)
     confdrop(citedrop)
+    
+
 
 
 ################################## Keep the citation and reference boxes in sync, so that they always show text from the same citation##################
@@ -575,35 +578,35 @@ def makeboxes():
 
 def makefields():
     global boxes
-    boxes=[{'box':titlebox,"text":"Title","book":1,"journal":1,"web":1,"data":1,"ed":1,"chap":1,"conf":1,"cap":1,"unpub":1,"custom":0,"None":0,"field":"Title"},
-           {'box':editionbox,"text":"Edition","book":1,"journal":0,"web":0,"data":0,"ed":0,"chap":1,"conf":0,"cap":0,"unpub":1,"custom":0,"None":0,"field":"Edition"},
-           {'box':surnamebox,"text":"Surname","book":1,"journal":1,"web":0,"data":0,"ed":0,"chap":0,"conf":1,"cap":0,"unpub":1,"custom":0,"None":0,"field":None},
-           {'box':initialbox,"text":"Initials","book":1,"journal":1,"web":0,"data":0,"ed":1,"chap":0,"conf":1,"cap":0,"unpub":1,"custom":0,"None":0,"field":None},
-           {'box':edsurnamebox,"text":"Ed. Surname","book":0,"journal":0,"web":0,"data":0,"ed":1,"chap":1,"conf":1,"cap":0,"unpub":1,"custom":0,"None":0,"field":None},
-           {'box':edinitialbox,"text":"Ed. Initials","book":0,"journal":0,"web":0,"data":0,"ed":1,"chap":1,"conf":1,"cap":0,"unpub":1,"custom":0,"None":0,"field":None},
-            {'box':chapsurnamebox,"text":"Chap. Surname","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":1,"conf":0,"cap":1,"unpub":1,"custom":0,"None":0,"field":None},
-           {'box':chapinitialbox,"text":"Chap. Initials","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":1,"conf":0,"cap":1,"unpub":1,"custom":0,"None":0,"field":None},
-           {'box':chaptitlebox,"text":"Chap. Title","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":1,"conf":0,"cap":1,"unpub":1,"custom":0,"None":0,"field":"Chap_Title"},
-            {'box':pubbox,"text":"Publisher","book":1,"journal":0,"web":0,"data":0,"ed":1,"chap":1,"conf":0,"cap":1,"unpub":1,"custom":0,"None":0,"field":"Publisher"},
-           {'box':citybox,"text":"City","book":1,"journal":0,"web":0,"data":0,"ed":1,"chap":1,"conf":0,"cap":1,"unpub":1,"custom":0,"None":0,"field":"CityOfPub"},
-           {'box':yearbox,"text":"Year","book":1,"journal":1,"web":1,"data":1,"ed":1,"chap":1,"conf":1,"cap":0,"unpub":1,"custom":0,"None":0,"field":"Year"},
-           {'box':journalbox,"text":"Journal","book":0,"journal":1,"web":0,"data":0,"ed":0,"chap":0,"conf":0,"cap":1,"unpub":1,"custom":0,"None":0,"field":"Journal"},
-           {'box':volbox,"text":"Volume","book":0,"journal":1,"web":0,"data":0,"ed":0,"chap":0,"conf":0,"cap":0,"unpub":1,"custom":0,"None":0,"field":"Volume"},
-           {'box':issuebox,"text":"Issue","book":0,"journal":1,"web":0,"data":0,"ed":0,"chap":0,"conf":0,"cap":0,"unpub":1,"custom":0,"None":0,"field":"Issue"},
-           {'box':pagesbox,"text":"Pages","book":0,"journal":1,"web":0,"data":0,"ed":0,"chap":1,"conf":1,"cap":0,"unpub":1,"custom":0,"None":0,"field":"Pages"},
-           {'box':urlbox,"text":"URL","book":1,"journal":1,"web":1,"data":1,"ed":1,"chap":1,"conf":1,"cap":0,"unpub":1,"custom":0,"None":0,"field":"URL"},
-           {'box':orgbox,"text":"Org.","book":0,"journal":0,"web":1,"data":1,"ed":0,"chap":0,"conf":0,"cap":1,"unpub":1,"custom":0,"None":0,"field":"Organisation"},
-           {'box':accessbox,"text":"Accessed","book":1,"journal":1,"web":1,"data":1,"ed":1,"chap":1,"conf":1,"cap":1,"unpub":1,"custom":0,"None":0,"field":"DateAccessed"},
-           {'box':writtenbox,"text":"Written","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":0,"conf":0,"cap":1,"unpub":1,"custom":0,"None":0,"field":"DateWritten"},
-           {'box':conference_place_box,"text":"Conference Place","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":0,"conf":1,"cap":1,"unpub":1,"custom":0,"None":0,"field":"Place_Conf"},
-           {'box':conference_title_box,"text":"Conference Name","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":0,"conf":1,"cap":1,"unpub":1,"custom":0,"None":0,"field":"Name_Conf"},
-           {'box':conference_date_box,"text":"Conference Date","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":0,"conf":1,"cap":1,"unpub":1,"custom":0,"None":0,"field":"Date_Conf"},
-           {'box':PDFbox,"text":"PDF","book":1,"journal":1,"web":1,"data":1,"ed":1,"chap":1,"conf":1,"cap":1,"unpub":1,"custom":0,"None":0,"field":"PDF"},
-           {'box':notesbox,"text":"Notes","book":1,"journal":1,"web":1,"data":1,"ed":1,"chap":1,"conf":1,"cap":1,"unpub":1,"custom":0,"None":0,"field":"Notes"},
-           {'box':customcite,"text":"Custom Citation","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":0,"conf":0,"cap":0,"unpub":0,"custom":1,"None":0,"field":"CiteOverride"},
-           {'box':customref,"text":"Custom Reference","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":0,"conf":0,"cap":0,"unpub":0,"custom":1,"None":0,"field":"RefOverride"}]
-            #mod: insert new box here
-            #mod book,web,data field etc indicates whether it should show up for that medium. 1=show 0=hide. Add a new key for any new medium.
+    boxes=[{'box':titlebox,"text":"Title","book":1,"journal":1,"web":1,"data":1,"ed":1,"chap":1,"conf":1,"cap":1,"unpub":1,"custom":0,"None":0,"All":1,"field":"Title"},
+                   {'box':editionbox,"text":"Edition","book":1,"journal":0,"web":0,"data":0,"ed":0,"chap":1,"conf":0,"cap":0,"unpub":1,"custom":0,"None":0,"All":1,"field":"Edition"},
+                   {'box':surnamebox,"text":"Surname","book":1,"journal":1,"web":0,"data":0,"ed":0,"chap":0,"conf":1,"cap":0,"unpub":1,"custom":0,"None":0,"All":1,"field":None},
+                   {'box':initialbox,"text":"Initials","book":1,"journal":1,"web":0,"data":0,"ed":1,"chap":0,"conf":1,"cap":0,"unpub":1,"custom":0,"None":0,"All":1,"field":None},
+                   {'box':edsurnamebox,"text":"Ed. Surname","book":0,"journal":0,"web":0,"data":0,"ed":1,"chap":1,"conf":1,"cap":0,"unpub":1,"custom":0,"None":0,"All":1,"field":None},
+                   {'box':edinitialbox,"text":"Ed. Initials","book":0,"journal":0,"web":0,"data":0,"ed":1,"chap":1,"conf":1,"cap":0,"unpub":1,"custom":0,"None":0,"All":1,"field":None},
+                    {'box':chapsurnamebox,"text":"Chap. Surname","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":1,"conf":0,"cap":1,"unpub":1,"custom":0,"None":0,"All":1,"field":None},
+                   {'box':chapinitialbox,"text":"Chap. Initials","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":1,"conf":0,"cap":1,"unpub":1,"custom":0,"None":0,"All":1,"field":None},
+                   {'box':chaptitlebox,"text":"Chap. Title","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":1,"conf":0,"cap":1,"unpub":1,"custom":0,"None":0,"All":1,"field":"Chap_Title"},
+                    {'box':pubbox,"text":"Publisher","book":1,"journal":0,"web":0,"data":0,"ed":1,"chap":1,"conf":0,"cap":1,"unpub":1,"custom":0,"None":0,"All":1,"field":"Publisher"},
+                   {'box':citybox,"text":"City","book":1,"journal":0,"web":0,"data":0,"ed":1,"chap":1,"conf":0,"cap":1,"unpub":1,"custom":0,"None":0,"All":1,"field":"CityOfPub"},
+                   {'box':yearbox,"text":"Year","book":1,"journal":1,"web":1,"data":1,"ed":1,"chap":1,"conf":1,"cap":0,"unpub":1,"custom":0,"None":0,"All":1,"field":"Year"},
+                   {'box':journalbox,"text":"Journal","book":0,"journal":1,"web":0,"data":0,"ed":0,"chap":0,"conf":0,"cap":1,"unpub":1,"custom":0,"None":0,"All":1,"field":"Journal"},
+                   {'box':volbox,"text":"Volume","book":0,"journal":1,"web":0,"data":0,"ed":0,"chap":0,"conf":0,"cap":0,"unpub":1,"custom":0,"None":0,"All":1,"field":"Volume"},
+                   {'box':issuebox,"text":"Issue","book":0,"journal":1,"web":0,"data":0,"ed":0,"chap":0,"conf":0,"cap":0,"unpub":1,"custom":0,"None":0,"All":1,"field":"Issue"},
+                   {'box':pagesbox,"text":"Pages","book":0,"journal":1,"web":0,"data":0,"ed":0,"chap":1,"conf":1,"cap":0,"unpub":1,"custom":0,"None":0,"All":1,"field":"Pages"},
+                   {'box':urlbox,"text":"URL","book":1,"journal":1,"web":1,"data":1,"ed":1,"chap":1,"conf":1,"cap":0,"unpub":1,"custom":0,"None":0,"All":1,"field":"URL"},
+                   {'box':orgbox,"text":"Org.","book":0,"journal":0,"web":1,"data":1,"ed":0,"chap":0,"conf":0,"cap":1,"unpub":1,"custom":0,"None":0,"All":1,"field":"Organisation"},
+                   {'box':accessbox,"text":"Accessed","book":1,"journal":1,"web":1,"data":1,"ed":1,"chap":1,"conf":1,"cap":1,"unpub":1,"custom":0,"None":0,"All":1,"field":"DateAccessed"},
+                   {'box':writtenbox,"text":"Written","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":0,"conf":0,"cap":1,"unpub":1,"custom":0,"None":0,"All":1,"field":"DateWritten"},
+                   {'box':conference_place_box,"text":"Conference Place","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":0,"conf":1,"cap":1,"unpub":1,"custom":0,"None":0,"All":1,"field":"Place_Conf"},
+                   {'box':conference_title_box,"text":"Conference Name","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":0,"conf":1,"cap":1,"unpub":1,"custom":0,"None":0,"All":1,"field":"Name_Conf"},
+                   {'box':conference_date_box,"text":"Conference Date","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":0,"conf":1,"cap":1,"unpub":1,"custom":0,"None":0,"All":1,"field":"Date_Conf"},
+                   {'box':PDFbox,"text":"PDF","book":1,"journal":1,"web":1,"data":1,"ed":1,"chap":1,"conf":1,"cap":1,"unpub":1,"custom":0,"None":0,"All":1,"field":"PDF"},
+                   {'box':notesbox,"text":"Notes","book":1,"journal":1,"web":1,"data":1,"ed":1,"chap":1,"conf":1,"cap":1,"unpub":1,"custom":0,"None":0,"All":1,"field":"Notes"},
+                   {'box':customcite,"text":"Custom Citation","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":0,"conf":0,"cap":0,"unpub":0,"custom":1,"None":0,"All":1,"field":"CiteOverride"},
+                   {'box':customref,"text":"Custom Reference","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":0,"conf":0,"cap":0,"unpub":0,"custom":1,"None":0,"All":1,"field":"RefOverride"}]
+                    #mod: insert new box here
+                    #mod book,web,data field etc indicates whether it should show up for that medium. 1=show 0=hide. Add a new key for any new medium.
 
 
 
@@ -709,6 +712,26 @@ def unpub(event=None):
     citenew("unpub")
 def custom(event=None):
     citenew("custom")
+def edit(event=None):
+    citenew("All")
+    rowtoedit=t[t["HReference"]==refdrop.cget("text")]
+    #print(rowtoedit["Title"])
+    data=[]
+    for x in boxes:
+        #print(x)
+        if x["field"]!=None:
+            for i in (rowtoedit[x["field"]]):
+                data.append(i)
+    n=0
+    for x in boxes:
+       
+        x["box"].insert(0, data[n])
+        n=n+1
+
+        
+        
+    
+   
 def minimise(event=None):
     citenew("None")
     authorframe.grid_forget()
@@ -765,7 +788,7 @@ def assemble():
     def j(media,thingtocount,ac,field,ref):
 
         t.loc[((t["Media"]==media) & (t[thingtocount]==ac)), field]=ref #needs fixing - author count only counts authors not editors or chapter authors
-
+        
     year=s("Year").astype(str)
     title=s("Title")
 
@@ -905,6 +928,7 @@ def assemble():
     chap_1_author_2_ed()
     unpub_1_author()
     custom()
+    
     #mod list function here
 
 
@@ -1018,8 +1042,9 @@ def cite(event=None):
 
     list_citations()
     t.to_csv('ref.csv',sep=";") #columns=list(exclude.symmetric_difference(allcol)),sep=";")
-
-
+    
+    for x in t["HReference"].tail(1):
+         messagebox.showinfo(title="Sucessfully Cited", message=x)
     reset()
 
 
@@ -1122,6 +1147,7 @@ def areyousure(com,word):
     else:
         pass
 
+
 ####################### Make menu bar #################################
 
 def makeribbon():
@@ -1141,6 +1167,7 @@ def makeribbon():
     global notegroup
     global projgroup
     global listgroup
+    
 
     ribbon=ttk.Notebook(rootwin)
     style = ttk.Style()
@@ -1202,55 +1229,58 @@ def makeribbon():
     global delpersonicon
     global removeallauthors
     
-    bookicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/bookicon.png').subsample(1)
-    copyciteicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/copyciteicon.png').subsample(1)
-    copyindexicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/copyindexicon.png').subsample(1)
-    copyreficon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/copyreficon.png').subsample(1)
-    csvicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/csvicon.png').subsample(1)
-    delicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/delicon.png').subsample(1)
-    delpersonicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/delpersonicon.png').subsample(1)
-    journalicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/journalicon.png').subsample(1)
-    minimiseicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/minimiseicon.png').subsample(1)
-    minimiseicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/minimiseicon.png').subsample(1)
-    newicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/newicon.png').subsample(1)
-    newicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/newicon.png').subsample(1)
-    pdficon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/pdficon.png').subsample(1)
-    removeallauthors=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/removeallauthors.png').subsample(1)
-    sortauthoricon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/sortauthoricon.png').subsample(1)
-    sortdownicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/sortdownicon.png').subsample(1)
-    sorttitleicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/sorttitleicon.png').subsample(1)
-    sortupicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/sortupicon.png').subsample(1)
-    soundicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/soundicon.png').subsample(1)
-    switchicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/switchicon.png').subsample(1)
-    switchicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/switchicon.png').subsample(1)
-    txticon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/txticon.png').subsample(1)
-    urlicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/urlicon.png').subsample(1)
-    wordicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/wordicon.png').subsample(1)
-    writeicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/writeicon.png').subsample(1)
-    usedicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/usedicon.png').subsample(1)
-    dataicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/dataset.png').subsample(1)
-    conficon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/conf.png').subsample(1)
-    edbookicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/edbookicon.png').subsample(1)
-    chapicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/chaptericon.png').subsample(1)
-    unpubicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/unpubicon.png').subsample(1)
-    pinicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/pinicon.png').subsample(1)
-    customicon=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Icons/customicon.png').subsample(1)
+    bookicon=PhotoImage(file='./Icons/bookicon.png').subsample(1)
+    copyciteicon=PhotoImage(file='./Icons/copyciteicon.png').subsample(1)
+    copyindexicon=PhotoImage(file='./Icons/copyindexicon.png').subsample(1)
+    copyreficon=PhotoImage(file='./Icons/copyreficon.png').subsample(1)
+    csvicon=PhotoImage(file='./Icons/csvicon.png').subsample(1)
+    delicon=PhotoImage(file='./Icons/delicon.png').subsample(1)
+    delpersonicon=PhotoImage(file='./Icons/delpersonicon.png').subsample(1)
+    journalicon=PhotoImage(file='./Icons/journalicon.png').subsample(1)
+    minimiseicon=PhotoImage(file='./Icons/minimiseicon.png').subsample(1)
+    minimiseicon=PhotoImage(file='./Icons/minimiseicon.png').subsample(1)
+    newicon=PhotoImage(file='./Icons/newicon.png').subsample(1)
+    newicon=PhotoImage(file='./Icons/newicon.png').subsample(1)
+    pdficon=PhotoImage(file='./Icons/pdficon.png').subsample(1)
+    removeallauthors=PhotoImage(file='./Icons/removeallauthors.png').subsample(1)
+    sortauthoricon=PhotoImage(file='./Icons/sortauthoricon.png').subsample(1)
+    sortdownicon=PhotoImage(file='./Icons/sortdownicon.png').subsample(1)
+    sorttitleicon=PhotoImage(file='./Icons/sorttitleicon.png').subsample(1)
+    sortupicon=PhotoImage(file='./Icons/sortupicon.png').subsample(1)
+    soundicon=PhotoImage(file='./Icons/soundicon.png').subsample(1)
+    switchicon=PhotoImage(file='./Icons/switchicon.png').subsample(1)
+    switchicon=PhotoImage(file='./Icons/switchicon.png').subsample(1)
+    txticon=PhotoImage(file='./Icons/txticon.png').subsample(1)
+    urlicon=PhotoImage(file='./Icons/urlicon.png').subsample(1)
+    wordicon=PhotoImage(file='./Icons/wordicon.png').subsample(1)
+    writeicon=PhotoImage(file='./Icons/writeicon.png').subsample(1)
+    usedicon=PhotoImage(file='./Icons/usedicon.png').subsample(1)
+    dataicon=PhotoImage(file='./Icons/dataset.png').subsample(1)
+    conficon=PhotoImage(file='./Icons/conf.png').subsample(1)
+    edbookicon=PhotoImage(file='./Icons/edbookicon.png').subsample(1)
+    chapicon=PhotoImage(file='./Icons/chaptericon.png').subsample(1)
+    unpubicon=PhotoImage(file='./Icons/unpubicon.png').subsample(1)
+    pinicon=PhotoImage(file='./Icons/pinicon.png').subsample(1)
+    customicon=PhotoImage(file='./Icons/customicon.png').subsample(1)
+    editicon=PhotoImage(file='./Icons/editicon.png').subsample(1)
+    searchicon=PhotoImage(file='./Icons/searchicon.png').subsample(1)
     #mod add path to new icon here
 
 
 
     ################## Make buttons ###############################
-    buttons=[{"image":newicon,"img":"✱","name":"New project","short":"<Control-n>","short2":"<Control-N>","command":newproj,"menu":filegroup, "row":1,"col":0},
-             {"image":delicon,"img":"🗑","name":"Delete project","short":None,"command":askdel,"menu":filegroup, "row":1,"col":1},
-             {"image":pinicon,"img":"","name":"Set as Default","short":None,"command":None,"menu":filegroup, "row":1,"col":3},
-             {"image":txticon,"img":"🖉","name":"Open list as .txt","short":"<Control-o>","command":export_as_txt,"menu":opengroup, "row":0,"col":0},
+    buttons=[{"image":newicon,"name":"New project","short":"<Control-n>","short2":"<Control-N>","command":newproj,"menu":filegroup, "row":1,"col":0},
+             {"image":delicon,"name":"Delete project","short":None,"command":askdel,"menu":filegroup, "row":1,"col":1},
+             {"image":pinicon,"name":"Set as Default","short":None,"command":None,"menu":filegroup, "row":1,"col":3},
+             {"image":txticon,"name":"Open list as .txt","short":"<Control-o>","command":export_as_txt,"menu":opengroup, "row":0,"col":0},
              {"image":csvicon,"img":"𝓧","name":"Open list as .csv","short":"<Control-O>","command":export_as_csv,"menu":opengroup, "row":1,"col":0},
              {"image":wordicon,"img":"Ｗ","name":"Open Project","short":None,"short2":None,"command":openfile,"menu":projgroup, "row":1,"col":0},
              {"image":switchicon,"img":"⥂","name":"Change Project File","short":None,"short2":None,"command":changefile,"menu":projgroup, "row":1,"col":1},
              {"image":minimiseicon,"img":"","name":"Minimise","short":"<Escape>","short2":None,"command":minimise,"menu":filegroup, "row":1,"col":10},
              
              
-             {"img":"🔎","name":"Find","short":"<Control-f>","short2":"<Control-F>","command":search,"menu":listgroup, "row":1,"col":100},
+             {"image":searchicon,"name":"Find","short":"<Control-f>","short2":"<Control-F>","command":search,"menu":listgroup, "row":1,"col":100},
+            {"image":editicon,"img":"", "name":"Edit","short":None,"short2":None,"command":edit,"menu":listgroup, "row":0,"col":100},
 
              {"image":copyreficon,"img":"🗇Ｒ","name":"Copy full reference","short":None,"command":copyref,"menu":copygroup, "row":0,"col":1},
              {"image":copyciteicon,"img":"🗇Ｃ","name":"Copy citation","short":None,"command":copycite,"menu":copygroup, "row":0,"col":2},
@@ -1287,21 +1317,14 @@ def makeribbon():
     c=0
 
     global photo
-    def makebutton(menu,command,img,short,c,tip):
-        b=Button(menu,command=command,image=img,bg=bgcolor,relief="flat",bd=0,highlightthickness=0)
-        b.grid(row=0,column=c,padx=5)
-        print(img)
-        rootwin.bind(short,command)
-      
-        return b
-
+  
     for i in buttons:
         try:
             pass
-            b=Button(i["menu"],text=i["img"],command=i["command"],image=i["image"],bg=bgcolor,relief="flat",bd=0,highlightthickness=0)
+            b=Button(i["menu"],command=i["command"], image=i["image"],bg=bgcolor,relief="flat",bd=0,highlightthickness=0)
         except:
             pass
-            b=Button(i["menu"],text=i["img"],command=i["command"],bg=bgcolor,relief="flat",highlightthickness=0)
+            b=Button(i["menu"],command=i["command"], bg=bgcolor,relief="flat",highlightthickness=0)
 
         b.grid(row=i["row"],column=i["col"],padx=5)
         #tip = Hovertip(b,str(i["name"])+" ("+str(i["short"])+")")
@@ -1322,7 +1345,7 @@ def splash(event=None):
     
     splashwin=Tk()
     splashwin.overrideredirect(True)
-    logo=PhotoImage(file='/home/jonathan/Documents/Tech/Scripts/Ref/Logo.png').subsample(1)
+    logo=PhotoImage(file='./Logo.png').subsample(1)
     splashlabel=Button(splashwin,text="test",image=logo,relief="flat")
     splashlabel.pack()
     splashwin.after(3, makewin)
