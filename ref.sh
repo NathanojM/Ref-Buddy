@@ -1,3 +1,2 @@
-chmod +x ~/Documents/Tech/Scripts/Ref/Ref.py
-nohup ~/Documents/Tech/Scripts/Ref/Ref.py &
-sudo apt update
+cd ~/Documents/Tech/Scripts/Ref
+python3 Ref.py

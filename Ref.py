@@ -3,6 +3,7 @@ This program has been designed for it to be easy to add new media types. Places 
 #platdep indicates bits which are platform dependent
 '''
 
+os.chdir("/home/jonathan/Documents/Tech/Scripts/Ref")
 
 from datetime import *
 import os
@@ -713,21 +714,24 @@ def unpub(event=None):
 def custom(event=None):
     citenew("custom")
 def edit(event=None):
-    citenew("All")
+    
+   
     rowtoedit=t[t["HReference"]==refdrop.cget("text")]
-    #print(rowtoedit["Title"])
-    data=[]
-    for x in boxes:
-        #print(x)
-        if x["field"]!=None:
-            for i in (rowtoedit[x["field"]]):
-                data.append(i)
-    n=0
-    for x in boxes:
-       
-        x["box"].insert(0, data[n])
-        n=n+1
-
+    
+    for i in (rowtoedit["Media"]):
+        print(i)
+        citenew(i)
+    
+        for x in boxes:
+            if x[i]==1:
+                x["box"].delete(0, END)
+                for z in rowtoedit[x["field"]]:
+                    x["box"].insert(0,z)
+    for b in boxes:
+        if "NaN" in str(b["box"].get()):
+            b["box"].delete(0,END)
+            
+          
         
         
     
@@ -1228,6 +1232,7 @@ def makeribbon():
     ############### Load icons for buttons ##################
     global delpersonicon
     global removeallauthors
+    os.chdir("/home/jonathan/Documents/Tech/Scripts/Ref")
     
     bookicon=PhotoImage(file='./Icons/bookicon.png').subsample(1)
     copyciteicon=PhotoImage(file='./Icons/copyciteicon.png').subsample(1)
