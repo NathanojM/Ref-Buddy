@@ -3,7 +3,7 @@ This program has been designed for it to be easy to add new media types. Places 
 #platdep indicates bits which are platform dependent
 '''
 
-os.chdir("/home/jonathan/Documents/Tech/Scripts/Ref")
+
 
 from datetime import *
 import os
@@ -17,18 +17,15 @@ import pandas as pd
 import pypandoc
 import time
 import threading
+from idlelib.tooltip import Hovertip
 
+os.chdir("/home/jonathan/Documents/Tech/Scripts/Ref")
 
-
-def clean():# Remove old outputs 
-    os.system("rm *.txt")
-    os.system("rm *.mp3")
-    os.system("rm reflist*")
     
 
 
-
-def load(): #Either read in the existing database or make a new one from scratch
+##Either read in the existing database or make a new one from scratch
+def load(): 
     global t
     global data
     global files
@@ -94,9 +91,13 @@ def load(): #Either read in the existing database or make a new one from scratch
         "PDF":["download.pdf"],
         "Notes":["Insert notes here"],
         "CiteOverride":[""],
-        "RefOverride":[""]}
-
+        "RefOverride":[""],
+        "CommMethod":[""],
+        "Receiver":[""],
+        "prep":[""]}
         #mod add new fields to this list
+        
+        
         projfiles={"Project":["Panspermia"],"File":["/home/jonathan/Documents/University/Course notes/Home/Biology/Palaeontology/Panspermia/Panspermia expanded.odt"],"Default":True}
 
     t=pd.DataFrame(data)
@@ -108,7 +109,13 @@ def load(): #Either read in the existing database or make a new one from scratch
     files.to_csv('files.csv',sep=";")
     unnamed()
 
-##################################### Search facility########################
+## Remove old outputs 
+def clean():
+    os.system("rm *.txt")
+    os.system("rm *.mp3")
+    os.system("rm reflist*")
+    
+### Search facility##
 def list_results(event=None):
     results.delete(0,END)
     results.insert(0,"")
@@ -174,7 +181,7 @@ def search(event=None):
     searchbox.focus_set()
 
 
-#################### Sort reference list ################
+## Sort reference list #
 def sort_list(d):
     global t
     t['DateAccessed'] = pd.to_datetime(t['DateAccessed'],dayfirst=True)
@@ -203,17 +210,23 @@ def sort_title():
     load()
 
 
-##################### Remove fields labelled 'unnamed'###################
+## Remove fields labelled 'unnamed'##
 #Currently unknown where these fields are coming from - function to remove them is a workaround.
 def unnamed():
+    global files
     global t
+    
     for x in t.head(0):
         if "Unnamed" in str(x):
             t=t.drop(x,axis=1)
-
     t.to_csv('ref.csv',sep=";")
+    
+    for x in files.head(0):
+        if "Unnamed" in str(x):
+            files=files.drop(x,axis=1)
+    files.to_csv('files.csv',sep=";")
 
-###################### Make new project ###########
+## Make new project #
 def newproj(event=None):
     global newprojbox
     global newprojwin
@@ -229,13 +242,13 @@ def makenewproj():
     newprojwin.destroy()
 
 
-################## Delete project ###########
+## Delete project #
 
 def askdel():
     areyousure(delproject,"project")
 def delproject():
 
-    todel = t[ t['Project'] == str(projdrop.cget("text"))].index
+    todel = t[ t['Project'] == str(cur_proj())].index
     t.drop(todel,inplace=True)
     t.to_csv('ref.csv',sep=";")
     load()
@@ -243,13 +256,14 @@ def delproject():
 
 
 
-########################## List of projects ###################
+## List of projects#
 def change_proj(event=None):
     global projdrop
 
-    curproj.set(projdrop.cget("text"))
+    curproj.set(cur_proj())
     list_citations()
     loadfile()
+    rootwin.title("Project: "+str(curproj.get()))
     
 def confdrop(x):
     x.config(bg=btncolor,fg="black")
@@ -276,57 +290,74 @@ def list_projects():
 
     projdrop=OptionMenu(projframe,curproj,*projects,command=change_proj)
     projdrop.grid(row=0,column=0,columnspan=30)
-    projdrop.grid(row=0,column=0,columnspan=30)
+
     confdrop(projdrop)
 
 
 
     curproj.set(projects[0])
+    rootwin.title("Project: "+str(curproj.get()))
 
-################# Open project document ########################
+## Cycle between projects with the pgup and pgdown keys
+
+def move(n):
+    try:
+        curproj.set(projects[int(projects.index(str(cur_proj())))+n])
+    except:
+        curproj.set(projects[0])
+    change_proj()
+    
+def nextproj(event=None):
+    move(1)
+def prevproj(event=None):
+    move(-1)
+
+## Open project document#
 
 def loadfile():
     global files
     global filelist
 
-    filelist=files[files["Project"]==str(projdrop.cget("text"))]["File"]
+    filelist=files[files["Project"]==str(cur_proj())]["File"]
     if len(filelist)<1:
         p=filedialog.askopenfilename(title="Link Project File")
 
-        files=files._append({"Project":projdrop.cget("text"),"File":p},ignore_index=True)
+        files=files._append({"Project":cur_proj(),"File":p},ignore_index=True)
         files.to_csv('files.csv',sep=";")
     display_proj()
 
 def openfile():
     loadfile()
     for x in filelist:
-
         os.system('xdg-open "'+str(x)+'"') #platdep
 
 
 
 def changefile(event=None):
-    #filelist=files[files["Project"]==str(projdrop.cget("text"))]["File"]
+
 
     p=filedialog.askopenfilename(title="Change Project File")
-    files.loc[files["Project"] == projdrop.cget("text"), "File"] = p
-
+    files.loc[files["Project"] == cur_proj(), "File"] = p
     files.to_csv('files.csv',sep=";")
     loadfile()
 
 def display_proj():
-    dispframe=Frame(projgroup)
-    dispframe.grid(row=0,column=0,columnspan=100,padx=10,pady=10)
+    global plabel
+    try:
+        plabel.destroy()
+    except:
+        pass
     for x in filelist:
-        plabel=Label(dispframe,bg=btncolor,text=(x.split("/")[-1]))
-        plabel.grid(row=0,column=0,columnspan=2)
+        plabel=Label(projgroup,bg=btncolor,text=(x.split("/")[-1]))
+        plabel.grid(row=0,column=0,columnspan=20)
 
-############################## List all recorded citations ###############
+## List all recorded citations #
 def list_citations():
     global citedrop
     global refdrop
     global ref
     global citation
+    global citations
     try:
         citedrop.destroy()
         refdrop.destroy()
@@ -341,8 +372,9 @@ def list_citations():
 
     for x in t[t["Project"]==curproj.get()]["HCitation"]:
         citations.append(x)
-    for x in t[t["Project"]==curproj.get()]["HReference"]:
+    for x in t[t["Project"]==curproj.get()]["Title"]:
         refs.append(x)
+      
 
     try:
         citedrop.destroy()
@@ -350,71 +382,82 @@ def list_citations():
     except:
         pass
     citedrop=OptionMenu(listgroup,citation,*citations,command=sync_cite)
-    citedrop.grid(row=0,column=0,sticky="w")
+    citedrop.grid(row=0,column=1,sticky="w")
 
     citation.set(citations[0])
 
     refdrop=OptionMenu(listgroup,ref,*refs,command=sync_ref)
-    #citedrop.configure(width=30)
-    #refdrop.configure(width=30)
-    refdrop.grid(row=1,column=0,sticky="w")
+
+    refdrop.grid(row=1,column=1,sticky="w")
     ref.set(refs[0])
 
     confdrop(refdrop)
     confdrop(citedrop)
     
 
+##get selected citation
+def cur_cite():
+    return citedrop.cget("text")
+def cur_ref():
+    return refdrop.cget("text")
+def cur_proj():
+    return projdrop.cget("text")
+### Keep the citation and reference boxes in sync, so that they always show text from the same citation##
 
-
-################################## Keep the citation and reference boxes in sync, so that they always show text from the same citation##################
+def makestring(x):
+    return x.index.astype(str)[0]
 def sync_cite(event=None):
-    i=int((t[t["HCitation"]==citedrop.cget("text")].index.astype(str)[0]))
-    ref.set(t.iloc[i]["HReference"])
+    i=int(makestring(t[t["HCitation"]==cur_cite()]))
+    ref.set(t.iloc[i]["Title"])
 
 def sync_ref(event=None):
-    i=int((t[t["HReference"]==refdrop.cget("text")].index.astype(str)[0]))
+    i=int(makestring(t[t["Title"]==cur_ref()]))
     citation.set(t.iloc[i]["HCitation"])
 
 
-########################### Export reference list #################################
+## Export reference list##
 def export_as_csv(event=None):
     pd.set_option('display.max_colwidth', None)
-    export_table=(t[t["Project"]==projdrop.cget("text")][["HCitation","HReference"]])
+    export_table=(t[t["Project"]==cur_proj()][["HCitation","HReference"]])
     export_table.to_csv('reflistcsv.csv',sep=";",index=False)
     os.system("libreoffice --calc reflistcsv.csv") #platdep
 
 def export_as_txt(event=None):
     pd.set_option('display.max_colwidth', None)
-    export_table=(t[t["Project"]==projdrop.cget("text")]["HReference"])
+    export_table=(t[t["Project"]==cur_proj()]["HReference"])
     export_table.to_csv('reflisttxt.csv',sep=";",index=False,header=None)
     os.system("gnome-text-editor reflisttxt.csv") #platdep
 
+##Open master sheet
+def openmaster(event=None):
+    x="Opening backend database for manual editing. \nRemoving data may permanently break the database. \nThis should only be used to correct data entry mistakes. \nTo export an independent reference list, use the export tools on the file tab.\n\nRefBuddy uses semicolons as the field deliminator, but Excel will assume that it is separated by commas - be sure to change this."
+    messagebox.showwarning(title="Proceed with caution", message=x)
+    os.system("xdg-open ref.csv")
+
 def copyref():
     rootwin.clipboard_clear()
-    rootwin.clipboard_append(refdrop.cget("text"))
+    rootwin.clipboard_append(cur_ref()) #change
 def copycite():
     rootwin.clipboard_clear()
-    rootwin.clipboard_append(citedrop.cget("text"))
+    rootwin.clipboard_append(cur_cite())
 def copyindex():
     rootwin.clipboard_clear()
-    rootwin.clipboard_append(int((t[t["HCitation"]==citedrop.cget("text")].index.astype(str)[0])))
+    rootwin.clipboard_append(int(makestring(t[t["HCitation"]==cur_cite()])))
 
 
-################## Delete a reference #########################
+## Delete a reference#
 def ask_delref():
     areyousure(delref,"reference")
 
 def delref():
     global t
-    i=int((t[t["HCitation"]==citedrop.cget("text")].index.astype(str)[0]))
+    i=int(makestring(t[t["HCitation"]==cur_cite()]))
     i=int(i)
-
     t=t.drop([i])
-
     t.to_csv('ref.csv',sep=";")
     list_citations()
 
-######################### Make window ############################
+## Make window#
 
 def makestyles():
     global bgcolor
@@ -453,7 +496,7 @@ def makewin(event=None):
 
 
 
-####################### Add an author to the list of authors so that another can be added #################
+## Add an author to the list of authors so that another can be added#
 
 def insert_author(event=None):
     insert(surnamelist,ilist,surnamebox,initialbox)
@@ -486,6 +529,7 @@ def insert(slb,ilb, sentry,ientry):
         ilb.insert(END,i)
         sentry.delete(0,END)
         ientry.delete(0,END)
+        sentry.focus_set()
     except:
         print("Nothing there")
 
@@ -501,10 +545,13 @@ def inscheck(event=None):
 
 def insclick(event):
     inscheck()
+    
+    
+    
 
 
 
-####################################### Entry boxes for data ###########################
+### Entry boxes for data#
 #'cap' indicates whether data from that box should be auto capitalised.
 
 def makeboxframes():
@@ -546,6 +593,9 @@ def makeboxes():
     global notesbox
     global customcite
     global customref
+    global commbox
+    global recbox
+    global prepbox
 
     titlebox=makebox()
     editionbox=makebox()
@@ -574,40 +624,46 @@ def makeboxes():
     notesbox=makebox()
     customcite=makebox()
     customref=makebox()
+    commbox=makebox()
+    recbox=makebox()
+    prepbox=makebox()
 
     #mod: insert new box here and make it global
 
 def makefields():
     global boxes
-    boxes=[{'box':titlebox,"text":"Title","book":1,"journal":1,"web":1,"data":1,"ed":1,"chap":1,"conf":1,"cap":1,"unpub":1,"custom":0,"None":0,"All":1,"field":"Title"},
-                   {'box':editionbox,"text":"Edition","book":1,"journal":0,"web":0,"data":0,"ed":0,"chap":1,"conf":0,"cap":0,"unpub":1,"custom":0,"None":0,"All":1,"field":"Edition"},
-                   {'box':surnamebox,"text":"Surname","book":1,"journal":1,"web":0,"data":0,"ed":0,"chap":0,"conf":1,"cap":0,"unpub":1,"custom":0,"None":0,"All":1,"field":None},
-                   {'box':initialbox,"text":"Initials","book":1,"journal":1,"web":0,"data":0,"ed":1,"chap":0,"conf":1,"cap":0,"unpub":1,"custom":0,"None":0,"All":1,"field":None},
-                   {'box':edsurnamebox,"text":"Ed. Surname","book":0,"journal":0,"web":0,"data":0,"ed":1,"chap":1,"conf":1,"cap":0,"unpub":1,"custom":0,"None":0,"All":1,"field":None},
-                   {'box':edinitialbox,"text":"Ed. Initials","book":0,"journal":0,"web":0,"data":0,"ed":1,"chap":1,"conf":1,"cap":0,"unpub":1,"custom":0,"None":0,"All":1,"field":None},
-                    {'box':chapsurnamebox,"text":"Chap. Surname","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":1,"conf":0,"cap":1,"unpub":1,"custom":0,"None":0,"All":1,"field":None},
-                   {'box':chapinitialbox,"text":"Chap. Initials","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":1,"conf":0,"cap":1,"unpub":1,"custom":0,"None":0,"All":1,"field":None},
-                   {'box':chaptitlebox,"text":"Chap. Title","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":1,"conf":0,"cap":1,"unpub":1,"custom":0,"None":0,"All":1,"field":"Chap_Title"},
-                    {'box':pubbox,"text":"Publisher","book":1,"journal":0,"web":0,"data":0,"ed":1,"chap":1,"conf":0,"cap":1,"unpub":1,"custom":0,"None":0,"All":1,"field":"Publisher"},
-                   {'box':citybox,"text":"City","book":1,"journal":0,"web":0,"data":0,"ed":1,"chap":1,"conf":0,"cap":1,"unpub":1,"custom":0,"None":0,"All":1,"field":"CityOfPub"},
-                   {'box':yearbox,"text":"Year","book":1,"journal":1,"web":1,"data":1,"ed":1,"chap":1,"conf":1,"cap":0,"unpub":1,"custom":0,"None":0,"All":1,"field":"Year"},
-                   {'box':journalbox,"text":"Journal","book":0,"journal":1,"web":0,"data":0,"ed":0,"chap":0,"conf":0,"cap":1,"unpub":1,"custom":0,"None":0,"All":1,"field":"Journal"},
-                   {'box':volbox,"text":"Volume","book":0,"journal":1,"web":0,"data":0,"ed":0,"chap":0,"conf":0,"cap":0,"unpub":1,"custom":0,"None":0,"All":1,"field":"Volume"},
-                   {'box':issuebox,"text":"Issue","book":0,"journal":1,"web":0,"data":0,"ed":0,"chap":0,"conf":0,"cap":0,"unpub":1,"custom":0,"None":0,"All":1,"field":"Issue"},
-                   {'box':pagesbox,"text":"Pages","book":0,"journal":1,"web":0,"data":0,"ed":0,"chap":1,"conf":1,"cap":0,"unpub":1,"custom":0,"None":0,"All":1,"field":"Pages"},
-                   {'box':urlbox,"text":"URL","book":1,"journal":1,"web":1,"data":1,"ed":1,"chap":1,"conf":1,"cap":0,"unpub":1,"custom":0,"None":0,"All":1,"field":"URL"},
-                   {'box':orgbox,"text":"Org.","book":0,"journal":0,"web":1,"data":1,"ed":0,"chap":0,"conf":0,"cap":1,"unpub":1,"custom":0,"None":0,"All":1,"field":"Organisation"},
-                   {'box':accessbox,"text":"Accessed","book":1,"journal":1,"web":1,"data":1,"ed":1,"chap":1,"conf":1,"cap":1,"unpub":1,"custom":0,"None":0,"All":1,"field":"DateAccessed"},
-                   {'box':writtenbox,"text":"Written","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":0,"conf":0,"cap":1,"unpub":1,"custom":0,"None":0,"All":1,"field":"DateWritten"},
-                   {'box':conference_place_box,"text":"Conference Place","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":0,"conf":1,"cap":1,"unpub":1,"custom":0,"None":0,"All":1,"field":"Place_Conf"},
-                   {'box':conference_title_box,"text":"Conference Name","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":0,"conf":1,"cap":1,"unpub":1,"custom":0,"None":0,"All":1,"field":"Name_Conf"},
-                   {'box':conference_date_box,"text":"Conference Date","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":0,"conf":1,"cap":1,"unpub":1,"custom":0,"None":0,"All":1,"field":"Date_Conf"},
-                   {'box':PDFbox,"text":"PDF","book":1,"journal":1,"web":1,"data":1,"ed":1,"chap":1,"conf":1,"cap":1,"unpub":1,"custom":0,"None":0,"All":1,"field":"PDF"},
-                   {'box':notesbox,"text":"Notes","book":1,"journal":1,"web":1,"data":1,"ed":1,"chap":1,"conf":1,"cap":1,"unpub":1,"custom":0,"None":0,"All":1,"field":"Notes"},
-                   {'box':customcite,"text":"Custom Citation","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":0,"conf":0,"cap":0,"unpub":0,"custom":1,"None":0,"All":1,"field":"CiteOverride"},
-                   {'box':customref,"text":"Custom Reference","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":0,"conf":0,"cap":0,"unpub":0,"custom":1,"None":0,"All":1,"field":"RefOverride"}]
-                    #mod: insert new box here
-                    #mod book,web,data field etc indicates whether it should show up for that medium. 1=show 0=hide. Add a new key for any new medium.
+    boxes=[{'box':titlebox,"text":"Title","book":1,"journal":1,"web":1,"data":1,"ed":1,"chap":1,"conf":1,"cap":1, "unpub":1,"custom":0,"pers":0,"None":0,"report":1,"All":1,"field":"Title"},
+            {'box':editionbox,"text":"Edition","book":1,"journal":0,"web":0,"data":0,"ed":0,"chap":1,"conf":0,"cap":0,"unpub":0,"custom":0,"pers":0,"None":0,"report":0,"All":1,"field":"Edition"},
+            {'box':surnamebox,"text":"Surname","book":1,"journal":1,"web":0,"data":0,"ed":0,"chap":0,"conf":1,"cap":0, "unpub":1,"custom":0,"pers":1,"None":0,"report":0,"All":1,"field":None},
+            {'box':initialbox,"text":"Initials","book":1,"journal":1,"web":0,"data":0,"ed":1,"chap":0,"conf":1,"cap":0, "unpub":1,"custom":0,"pers":1,"None":0,"report":0,"All":1,"field":None},
+            {'box':edsurnamebox,"text":"Ed. Surname","book":0,"journal":0,"web":0,"data":0,"ed":1,"chap":1,"conf":1,"cap":0,"unpub":0,"custom":0,"pers":0,"None":0,"report":0,"All":1,"field":None},
+            {'box':edinitialbox,"text":"Ed. Initials","book":0,"journal":0,"web":0,"data":0,"ed":1,"chap":1,"conf":1,"cap":0,"unpub":0,"custom":0,"pers":0,"None":0,"report":0,"All":1,"field":None},
+            {'box':chapsurnamebox,"text":"Chap. Surname","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":1,"conf":0,"cap":1,"unpub":0,"custom":0,"pers":0,"None":0,"report":0,"All":1,"field":None},
+            {'box':chapinitialbox,"text":"Chap. Initials","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":1,"conf":0,"cap":1,"unpub":0,"custom":0,"pers":0,"None":0,"report":0,"All":1,"field":None},
+            {'box':chaptitlebox,"text":"Chap. Title","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":1,"conf":0,"cap":1,"unpub":0,"custom":0,"pers":0,"None":0,"report":0,"All":1,"field":"Chap_Title"},
+            {'box':pubbox,"text":"Publisher","book":1,"journal":0,"web":0,"data":0,"ed":1,"chap":1,"conf":0,"cap":1, "unpub":1,"custom":0,"pers":0,"None":0,"report":0,"All":1,"field":"Publisher"},
+            {'box':citybox,"text":"City","book":1,"journal":0,"web":0,"data":0,"ed":1,"chap":1,"conf":0,"cap":1, "unpub":1,"custom":0,"pers":0,"None":0,"report":0,"All":1,"field":"CityOfPub"},
+            {'box':yearbox,"text":"Year","book":1,"journal":1,"web":1,"data":1,"ed":1,"chap":1,"conf":1,"cap":0, "unpub":1,"custom":0,"pers":1,"None":0,"report":1,"All":1,"field":"Year"},
+            {'box':journalbox,"text":"Journal","book":0,"journal":1,"web":0,"data":0,"ed":0,"chap":0,"conf":0,"cap":1,"unpub":0,"custom":0,"pers":0,"None":0,"report":0,"All":1,"field":"Journal"},
+            {'box':volbox,"text":"Volume","book":0,"journal":1,"web":0,"data":0,"ed":0,"chap":0,"conf":0,"cap":0,"unpub":0,"custom":0,"pers":0,"None":0,"report":0,"All":1,"field":"Volume"},
+            {'box':issuebox,"text":"Issue","book":0,"journal":1,"web":0,"data":0,"ed":0,"chap":0,"conf":0,"cap":0,"unpub":0,"custom":0,"pers":0,"None":0,"report":0,"All":1,"field":"Issue"},
+            {'box':pagesbox,"text":"Pages","book":0,"journal":1,"web":0,"data":0,"ed":0,"chap":1,"conf":1,"cap":0, "unpub":0,"custom":0,"pers":0,"None":0,"report":1,"All":1,"field":"Pages"},
+            {'box':urlbox,"text":"URL","book":1,"journal":1,"web":1,"data":1,"ed":1,"chap":1,"conf":1,"cap":0, "unpub":0,"custom":0,"pers":0,"None":0,"report":1,"All":1,"field":"URL"},
+            {'box':orgbox,"text":"Org.","book":0,"journal":0,"web":1,"data":1,"ed":0,"chap":0,"conf":0,"cap":1, "unpub":0,"custom":0,"pers":0,"None":0,"report":1,"All":1,"field":"Organisation"},
+            {'box':accessbox,"text":"Accessed","book":1,"journal":1,"web":1,"data":1,"ed":1,"chap":1,"conf":1,"cap":1, "unpub":0,"custom":0,"pers":1,"None":0,"report":1,"All":1,"field":"DateAccessed"},
+            {'box':writtenbox,"text":"Written","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":0,"conf":0,"cap":1, "unpub":0,"custom":0,"pers":0,"None":0,"report":0,"All":1,"field":"DateWritten"},
+            {'box':conference_place_box,"text":"Conference Place","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":0,"conf":1,"cap":1, "unpub":0,"custom":0,"pers":0,"None":0,"report":0,"All":1,"field":"Place_Conf"},
+            {'box':conference_title_box,"text":"Conference Name","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":0,"conf":1,"cap":1, "unpub":0,"custom":0,"pers":0,"None":0,"report":0,"All":1,"field":"Name_Conf"},
+            {'box':conference_date_box,"text":"Conference Date","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":0,"conf":1,"cap":1, "unpub":0,"custom":0,"pers":0,"None":0,"report":0,"All":1,"field":"Date_Conf"},
+            {'box':PDFbox,"text":"PDF","book":1,"journal":1,"web":1,"data":1,"ed":1,"chap":1,"conf":1,"cap":1, "unpub":0,"custom":0,"pers":0,"None":0,"report":0,"All":1,"field":"PDF"},
+            {'box':notesbox,"text":"Notes","book":1,"journal":1,"web":1,"data":1,"ed":1,"chap":1,"conf":1,"cap":1, "unpub":0,"custom":0,"pers":0,"None":0,"report":0,"All":1,"field":"Notes"},
+            {'box':customcite,"text":"Custom Citation","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":0,"conf":0,"cap":0,"unpub":0,"custom":1,"pers":0,"None":0,"report":0,"All":1,"field":"CiteOverride"},
+            {'box':customref,"text":"Custom Reference","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":0,"conf":0,"cap":0,"unpub":0,"custom":1,"pers":0,"None":0,"report":0,"All":1,"field":"RefOverride"},
+            {'box':commbox,"text":"Communication Method","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":0,"conf":0,"cap":0,"unpub":0,"custom":0,"pers":1,"None":0,"report":0,"All":1,"field":"CommMethod"},
+            {'box':recbox,"text":"Receiver","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":0,"conf":0,"cap":0,"unpub":0,"custom":0,"pers":1,"None":0,"report":0,"All":1,"field":"Receiver"},
+            {'box':prepbox,"text":"Preposition","book":0,"journal":0,"web":0,"data":0,"ed":0,"chap":0,"conf":0,"cap":0,"unpub":0,"custom":0,"pers":1,"None":0,"report":0,"All":1,"field":"prep"}]
+            #mod: insert new box here
+            #book,web,data field etc indicates whether it should show up for that medium. 1=show 0=hide. Add a new key for any new medium.
 
 
 
@@ -620,7 +676,7 @@ def makelabels():
 
 
 
-############################## Populate window with fields necessary to cite selected media ###################
+## Populate window with fields necessary to cite selected media#
 
 def refresh(forwhat):
     for widget in boxframe.winfo_children():
@@ -692,7 +748,7 @@ def citenew(m):
     global media
     refresh(m)
     media=m
-    rootwin.title("Citing new "+media)
+    rootwin.title("Project: "+str(curproj.get())+"    Citing: "+str(media))
 
 
 def book(event=None):
@@ -713,10 +769,16 @@ def unpub(event=None):
     citenew("unpub")
 def custom(event=None):
     citenew("custom")
+def pers(event=None):
+    citenew("pers")
+def report(event=None):
+    citenew("report")
+#mod add function here
+
 def edit(event=None):
     
    
-    rowtoedit=t[t["HReference"]==refdrop.cget("text")]
+    rowtoedit=t[t["Title"]==cur_ref()]
     
     for i in (rowtoedit["Media"]):
         print(i)
@@ -743,34 +805,36 @@ def minimise(event=None):
     chapterframe.grid_forget()
     ribbon.select(filetab)
 
-#mod add function here
 
-#################### Link PDF of paper to reference ################
+## Link PDF of paper to reference #
 def linkpdf(event):
-    p=filedialog.askopenfilename(title="Link PDF")
+    
+    types= (('Open Documents', '*.od*'),('All', '*'),('Microsoft Office Documents', '*docx'))
+    for x in files[files["Project"]==cur_proj()]["File"]:
+        p=filedialog.askopenfilename(title="Link PDF",filetypes=types,initialdir=(x.replace(plabel.cget("text"),"")))
     PDFbox.insert(0,p)
 
 
-################# Open PDF or URL linked to reference ############
+## Open PDF or URL linked to reference #
 def open_pdf(event=None):
     x=""
-    for x in t[t["HReference"]==refdrop.cget("text")]["PDF"]:
+    for x in t[t["Title"]==cur_ref()]["PDF"]:
 
         if "nan" in str(x):
             p=filedialog.askopenfilename(title="Link PDF")
-            t.loc[(t["HReference"]==refdrop.cget("text")), "PDF"]=p
+            t.loc[(t["Title"]==cur_ref()), "PDF"]=p
             t.to_csv('ref.csv',sep=";")
         else:
             os.system('xdg-open "'+str(x)+'"') #platdep
 
 def open_url(event=None):
     x=""
-    for x in t[t["HReference"]==refdrop.cget("text")]["URL"]:
+    for x in t[t["Title"]==cur_ref()]["URL"]:
         os.system('xdg-open "'+str(x)+'"') #platdep
 
 
 
-############################## Clear boxes after media has been cited ##############
+## Clear boxes after media has been cited #
 def reset(event=None):
     for widget in boxframe.winfo_children():
         try:
@@ -781,7 +845,7 @@ def reset(event=None):
 
 
 
-###################### Assemble the citation into the right syntax #########################
+## Assemble the citation into the right syntax#
 def assemble():
     
     global t
@@ -789,7 +853,7 @@ def assemble():
     #global title
     def s(x):
         return t[x].astype(str).str.replace("[","").str.replace("]","").str.replace("'","")
-    def j(media,thingtocount,ac,field,ref):
+    def j(media,thingtocount,ac,field,ref): #ac=authorcount
 
         t.loc[((t["Media"]==media) & (t[thingtocount]==ac)), field]=ref #needs fixing - author count only counts authors not editors or chapter authors
         
@@ -911,6 +975,12 @@ def assemble():
     def custom():
         j("custom","AuthorCount",0,"HCitation",s("CiteOverride"))
         j("custom","AuthorCount",0,"HReference",s("RefOverride"))
+    def cite_pers():
+        j("pers","AuthorCount",1,"HCitation",s0+", "+i0+" ("+year+")")
+        j("pers","AuthorCount",1,"HReference",s0+", "+i0+" ("+year+") "+s("CommMethod")+" "+s("prep")+" "+s("Receiver")+", "+s("DateAccessed"))
+    def cite_report():
+        j("report","AuthorCount",0,"HCitation",s("Organisation")+" ("+year+")")
+        j("report","AuthorCount",0,"HReference",s("Organisation")+" ("+year+") "+title+". "+"pp. "+s("Pages")+". Available at: "+s("URL")+" (Accessed: "+s("DateAccessed")+")")
      #mod add function to generate the right syntax
 
     book_single_author()
@@ -932,11 +1002,13 @@ def assemble():
     chap_1_author_2_ed()
     unpub_1_author()
     custom()
+    cite_pers()
+    cite_report()
     
     #mod list function here
 
 
-########################## Write the information entered into the boxes to the dataframe######################
+## Write the information entered into the boxes to the dataframe##
 #This puts the data into fields in the table, but the citation is assembled in the assemble() function.
 
 def cite(event=None):
@@ -1036,7 +1108,7 @@ def cite(event=None):
     keys.append("Media")
     values.append(media)
     keys.append("Project")
-    values.append(projdrop.cget("text"))
+    values.append(cur_proj())
 
     for i in range(len(keys)):
         dictionary[keys[i]]=values[i]
@@ -1047,21 +1119,22 @@ def cite(event=None):
     list_citations()
     t.to_csv('ref.csv',sep=";") #columns=list(exclude.symmetric_difference(allcol)),sep=";")
     
+    for x in t["HCitation"].tail(1):
+        rootwin.clipboard_append(x)
     for x in t["HReference"].tail(1):
          messagebox.showinfo(title="Sucessfully Cited", message=x)
+         
     reset()
 
 
 
 
 
-########################## Check for any citations that have been cited in Ref Buddy but haven't been used in the project ###############
-def check_unused():
-    for x in files[files["Project"]==projdrop.cget("text")]["File"]:
+## Check for any citations that have been cited in Ref Buddy but haven't been used in the project #
+def check_unused(): #find project file and convert to txt
+    for x in files[files["Project"]==cur_proj()]["File"]:
         output = pypandoc.convert_file(x, 'plain', outputfile="unused.txt")
         assert output == ""
-
-
     file=open("unused.txt")
     filestring=""
     for x in file.readlines():
@@ -1070,33 +1143,31 @@ def check_unused():
 
     usedwin=Tk()
     usedwin.title("Unused Citation Checker")
-    for x in t["HCitation"]:
-
+    
+    def makeusedlabel(used,mark,color):
+            t.loc[((t["HCitation"]==x)), "Used"]=used
+            l=Label(usedwin,text=mark+"  "+x,bg=color,justify="left",width=50)
+            l.pack()
+    
+    for x in citations: #if statements are in separate blocks so that the correct ones appear on top. Using an elif mixes them up
         if x in filestring:
-            t.loc[((t["HCitation"]==x)), "Used"]="Used"
-            l=Label(usedwin,text="🗸 "+x,bg="lightgreen",justify="left",width=50)
-            l.pack()
-
-        else:
-            pass
-    for x in t["HCitation"]:
+            makeusedlabel("Used","🗸","lightgreen")
+        
+    for x in citations:
         if x not in filestring:
-            t.loc[((t["HCitation"]==x)), "Used"]="Not Used"
-            l=Label(usedwin,text="✕ "+x,bg="red",justify="left",width=50)
-            l.pack()
+            makeusedlabel("Not Used","✕","red")
 
 
 
 
-############## Read project out loud #############################
-            #if this doesn't work try running sudo apt install pandoc
+## Read project out loud
+#if this doesn't work try running sudo apt install pandoc
 
 
 def check_prog(): #checks whether the function has finished and stops the progress bar
     if proofthread.is_alive():
         rootwin.after(1, check_prog)
     else:
-        #prog.stop()
         prog.destroy()
 
 def proofread(event=None): #puts the proofread function in a separate thread so that the progress bar can work
@@ -1106,9 +1177,7 @@ def proofread(event=None): #puts the proofread function in a separate thread so 
     prog=ttk.Progressbar(rootwin,orient=HORIZONTAL,length=500,mode='determinate')
     prog.grid(row=100,column=0,columnspan=100)
     proofthread=threading.Thread(target=generate_audio)
-
     proofthread.daemon=True
-    
     proofthread.start()
     rootwin.after(1, check_prog)
 
@@ -1118,11 +1187,11 @@ def inc(n):
         time.sleep(0.001)
 def generate_audio(event=None): #generates the mp3
 
-    m="This tool may take several minutes to run, depending on the length of your document, and may look like it's not dong anything. Please be patient. A 500 word document will take approximately 45 seconds to generate."
+    m="This tool may take several minutes to run. A 500 word document will take approximately 45 seconds to generate."
     messagebox.showinfo(title="Slow Process", message=m)
     prog ['value']=0
 
-    for x in files[files["Project"]==projdrop.cget("text")]["File"]:
+    for x in files[files["Project"]==cur_proj()]["File"]:
         output = pypandoc.convert_file(x, 'plain', outputfile="readoutloud.txt")
         assert output == ""
     inc(20)
@@ -1152,7 +1221,7 @@ def areyousure(com,word):
         pass
 
 
-####################### Make menu bar #################################
+## Make menu bar##
 
 def makeribbon():
     global filegroup
@@ -1176,47 +1245,36 @@ def makeribbon():
     ribbon=ttk.Notebook(rootwin)
     style = ttk.Style()
     style.configure('TNotebook.Tab', font=bgtabstyle,background=bgcolor, foreground=textcolor, padding=[10,5])
-    #style.map("TNotebook.Tab",background=[("active", accentcolor)],font=[("active",("Verdana",10,"bold underline"))])
     style.map("TNotebook.Tab",background=[("selected", accentcolor)],font=[("selected",activetabstyle)])
     style.configure('TNotebook',borderwidth=0)
 
 
     def maketab(label):
         f=Frame(ribbon,bg=accentcolor,relief="flat")
-
-
         ribbon.add(f,text=label)
         return f
+    
     def makegroup(tab,label,col):
         l=LabelFrame(tab,text=label,bg=accentcolor2,font=groupstyle,labelanchor="s",bd=3,relief="flat")
         l.grid(row=0,column=col,padx=10,pady=10)
         return l
 
-    ############### Make tabs##############
+    # Make tabs#
     filetab=maketab("File")
-    #viewtab=maketab("View")
     citationtab=maketab("Citations")
-    #filtertab=maketab("Filter")
     citetab=maketab("Cite")
     prooftab=maketab("Proofread")
 
-    ################ Place Ribbon in window #############
+    # Place Ribbon in window #
     ribbon.grid(row=0,column=0,columnspan=500,sticky="w")
 
 
-    ################ Make groups to organise buttons on tabs##################
+    # Make groups to organise buttons on tabs##
     filegroup=makegroup(filetab,"File",1)
     projgroup=makegroup(filetab,"Project File",2)
     opengroup=makegroup(filetab,"Open List",3)
-    
     notegroup=makegroup(filetab,"Notepad",4)
-    #findgroup=makegroup(filtertab,"Find",100)
-    #windowgroup=makegroup(viewtab,"Window",0)
     copygroup=makegroup(citationtab,"Copy",0)
-
-    #accessgroup=makegroup(filtertab,"Used/Access",0)
-
-   
     searchgroup=makegroup(citationtab,"Search",100)
     citegroup=makegroup(citetab,"Cite New",0)
     authorgroup=makegroup(citetab,"Authors",1)
@@ -1229,125 +1287,108 @@ def makeribbon():
     listgroup=makegroup(citationtab,"",100)
 
 
-    ############### Load icons for buttons ##################
+    # Load icons for buttons#
     global delpersonicon
-    global removeallauthors
+
     os.chdir("/home/jonathan/Documents/Tech/Scripts/Ref")
     
-    bookicon=PhotoImage(file='./Icons/bookicon.png').subsample(1)
-    copyciteicon=PhotoImage(file='./Icons/copyciteicon.png').subsample(1)
-    copyindexicon=PhotoImage(file='./Icons/copyindexicon.png').subsample(1)
-    copyreficon=PhotoImage(file='./Icons/copyreficon.png').subsample(1)
-    csvicon=PhotoImage(file='./Icons/csvicon.png').subsample(1)
-    delicon=PhotoImage(file='./Icons/delicon.png').subsample(1)
-    delpersonicon=PhotoImage(file='./Icons/delpersonicon.png').subsample(1)
-    journalicon=PhotoImage(file='./Icons/journalicon.png').subsample(1)
-    minimiseicon=PhotoImage(file='./Icons/minimiseicon.png').subsample(1)
-    minimiseicon=PhotoImage(file='./Icons/minimiseicon.png').subsample(1)
-    newicon=PhotoImage(file='./Icons/newicon.png').subsample(1)
-    newicon=PhotoImage(file='./Icons/newicon.png').subsample(1)
-    pdficon=PhotoImage(file='./Icons/pdficon.png').subsample(1)
-    removeallauthors=PhotoImage(file='./Icons/removeallauthors.png').subsample(1)
-    sortauthoricon=PhotoImage(file='./Icons/sortauthoricon.png').subsample(1)
-    sortdownicon=PhotoImage(file='./Icons/sortdownicon.png').subsample(1)
-    sorttitleicon=PhotoImage(file='./Icons/sorttitleicon.png').subsample(1)
-    sortupicon=PhotoImage(file='./Icons/sortupicon.png').subsample(1)
-    soundicon=PhotoImage(file='./Icons/soundicon.png').subsample(1)
-    switchicon=PhotoImage(file='./Icons/switchicon.png').subsample(1)
-    switchicon=PhotoImage(file='./Icons/switchicon.png').subsample(1)
-    txticon=PhotoImage(file='./Icons/txticon.png').subsample(1)
-    urlicon=PhotoImage(file='./Icons/urlicon.png').subsample(1)
-    wordicon=PhotoImage(file='./Icons/wordicon.png').subsample(1)
-    writeicon=PhotoImage(file='./Icons/writeicon.png').subsample(1)
-    usedicon=PhotoImage(file='./Icons/usedicon.png').subsample(1)
-    dataicon=PhotoImage(file='./Icons/dataset.png').subsample(1)
-    conficon=PhotoImage(file='./Icons/conf.png').subsample(1)
-    edbookicon=PhotoImage(file='./Icons/edbookicon.png').subsample(1)
-    chapicon=PhotoImage(file='./Icons/chaptericon.png').subsample(1)
-    unpubicon=PhotoImage(file='./Icons/unpubicon.png').subsample(1)
-    pinicon=PhotoImage(file='./Icons/pinicon.png').subsample(1)
-    customicon=PhotoImage(file='./Icons/customicon.png').subsample(1)
-    editicon=PhotoImage(file='./Icons/editicon.png').subsample(1)
-    searchicon=PhotoImage(file='./Icons/searchicon.png').subsample(1)
+    def makeicon(filename):
+        return PhotoImage(file='./Icons/'+filename+'.png').subsample(1)
+        
+    bookicon=makeicon("bookicon")
+    copyciteicon=makeicon('copyciteicon')
+    copyindexicon=makeicon('copyindexicon')
+    copyreficon=makeicon('copyreficon')
+    csvicon=makeicon('csvicon')
+    delicon=makeicon('delicon')
+    delpersonicon=makeicon('delpersonicon')
+    journalicon=makeicon('journalicon')
+    minimiseicon=makeicon('minimiseicon')
+    minimiseicon=makeicon('minimiseicon')
+    newicon=makeicon('newicon')
+    newicon=makeicon('newicon')
+    pdficon=makeicon('pdficon')
+    removeallauthors=makeicon('removeallauthors')
+    sortauthoricon=makeicon('sortauthoricon')
+    sortdownicon=makeicon('sortdownicon')
+    sorttitleicon=makeicon('sorttitleicon')
+    sortupicon=makeicon('sortupicon')
+    soundicon=makeicon('soundicon')
+    switchicon=makeicon('switchicon')
+    switchicon=makeicon('switchicon')
+    txticon=makeicon('txticon')
+    urlicon=makeicon('urlicon')
+    wordicon=makeicon('wordicon')
+    writeicon=makeicon('writeicon')
+    usedicon=makeicon('usedicon')
+    dataicon=makeicon('dataicon')
+    conficon=makeicon('conficon')
+    edbookicon=makeicon('edbookicon')
+    chapicon=makeicon('chapicon')
+    unpubicon=makeicon('unpubicon')
+    pinicon=makeicon('pinicon')
+    customicon=makeicon('customicon')
+    editicon=makeicon('editicon')
+    searchicon=makeicon('searchicon')
+    mastericon=makeicon('mastericon')
+    perscommicon=makeicon('perscommicon')
+    reporticon=makeicon('reporticon')
+
     #mod add path to new icon here
 
 
-
-    ################## Make buttons ###############################
-    buttons=[{"image":newicon,"name":"New project","short":"<Control-n>","short2":"<Control-N>","command":newproj,"menu":filegroup, "row":1,"col":0},
+   # Make buttons#
+    buttons=[{"image":newicon,"name":"New project","short":"<Control-n>","command":newproj,"menu":filegroup, "row":1,"col":0},
              {"image":delicon,"name":"Delete project","short":None,"command":askdel,"menu":filegroup, "row":1,"col":1},
              {"image":pinicon,"name":"Set as Default","short":None,"command":None,"menu":filegroup, "row":1,"col":3},
              {"image":txticon,"name":"Open list as .txt","short":"<Control-o>","command":export_as_txt,"menu":opengroup, "row":0,"col":0},
-             {"image":csvicon,"img":"𝓧","name":"Open list as .csv","short":"<Control-O>","command":export_as_csv,"menu":opengroup, "row":1,"col":0},
-             {"image":wordicon,"img":"Ｗ","name":"Open Project","short":None,"short2":None,"command":openfile,"menu":projgroup, "row":1,"col":0},
-             {"image":switchicon,"img":"⥂","name":"Change Project File","short":None,"short2":None,"command":changefile,"menu":projgroup, "row":1,"col":1},
-             {"image":minimiseicon,"img":"","name":"Minimise","short":"<Escape>","short2":None,"command":minimise,"menu":filegroup, "row":1,"col":10},
-             
-             
-             {"image":searchicon,"name":"Find","short":"<Control-f>","short2":"<Control-F>","command":search,"menu":listgroup, "row":1,"col":100},
-            {"image":editicon,"img":"", "name":"Edit","short":None,"short2":None,"command":edit,"menu":listgroup, "row":0,"col":100},
-
-             {"image":copyreficon,"img":"🗇Ｒ","name":"Copy full reference","short":None,"command":copyref,"menu":copygroup, "row":0,"col":1},
-             {"image":copyciteicon,"img":"🗇Ｃ","name":"Copy citation","short":None,"command":copycite,"menu":copygroup, "row":0,"col":2},
-             {"image":copyindexicon,"img":"🗇ｉ","name":"Copy index number","short":None,"command":copyindex,"menu":copygroup, "row":1,"col":1},
-            {"image":delicon,"img":"🗑","name":"Delete citation","short":None,"command":ask_delref,"menu":copygroup, "row":1,"col":2},
-
-             {"image":urlicon,"img":"🌐","name":"Open paper URL","short":"<Control-u>","short2":"<Control-U>","command":open_url,"menu":papergroup, "row":0,"col":0},
-             {"image":pdficon,"img":"🗎","name":"Open paper PDF","short":"<Control-p>","short2":"<Control-P>","command":open_pdf,"menu":papergroup, "row":1,"col":0},
-
-            {"image":sortupicon,"img":"⇧","name":"Newest First","short":None,"command":sort_newest,"menu":sortgroup, "row":0,"col":0},
-            {"image":sortdownicon,"img":"⇩","name":"Oldest First","short":None,"command":sort_oldest,"menu":sortgroup, "row":0,"col":1},
-            {"image":sortauthoricon,"img":"👥","name":"By Author","short":None,"command":sort_author,"menu":sortgroup, "row":1,"col":0},
-            {"image":sorttitleicon,"img":"Ｔ","name":"By Title","short":None,"command":sort_title,"menu":sortgroup, "row":1,"col":1},
-
-             {"image":bookicon,"img":"📖","name":"Cite new book","short":"<Control-b>","short2":"<Control-B>","command":book,"menu":citegroup, "row":0,"col":0},
-             {"image":journalicon,"img":"📰","name":"Cite new journal","short":"<Control-j>","short2":"<Control-J>","command":journal,"menu":citegroup, "row":0,"col":1},
-             {"image":urlicon,"img":"🌍","name":"Cite new webpage","short":"<Control-w>","short2":"<Control-W>","command":web,"menu":citegroup, "row":1,"col":0},
-             {"image":dataicon,"img":"🗠","name":"Cite new dataset","short":"<Control-d>","short2":"<Control-D>","command":dataset,"menu":citegroup, "row":1,"col":1},
-             {"image":conficon,"img":".","name":"Cite new conference paper","short":None,"short2":None,"command":confpapers,"menu":citegroup, "row":0,"col":2},
-             {"image":edbookicon,"img":".","name":"Cite new edited book","short":"<Control-e>","short2":None,"command":edbook,"menu":citegroup, "row":1,"col":2},
-             {"image":chapicon,"img":".","name":"Cite new chapter in an edited book","short":"<Control-h>","short2":None,"command":chap,"menu":citegroup, "row":1,"col":3},
-             {"image":unpubicon,"img":".","name":"Cite new unpublished item","short":"<Control-u>","short2":None,"command":unpub,"menu":citegroup, "row":0,"col":3},
-             {"image":customicon,"img":".","name":"Manually create custom citation","short":None,"short2":None,"command":custom,"menu":citegroup, "row":0,"col":4},
-
-
-             {"image":removeallauthors,"img":"⛔👥","name":"Delete all authors in citation","short":None,"command":None,"menu":authorgroup, "row":0,"col":0},
-
-             {"image":writeicon,"img":"✔","name":"Write to file","short":"<Control-Return>","command":cite,"menu":writegroup, "row":1,"col":0},
-
-             {"image":soundicon,"img":"📢","name":"Read out loud","short":"<Control-r>","command":proofread,"menu":proofgroup, "row":0,"col":0},
-
-            {"image":usedicon,"img":"U","name":"Check for unused citations","short":None,"short2":None,"command":check_unused,"menu":proofgroup, "row":1,"col":0}]
+             {"image":csvicon,"name":"Open list as .csv","short":"<Control-O>","command":export_as_csv,"menu":opengroup, "row":1,"col":0},
+             {"image":mastericon,"name":"Open master sheet","short":"<Control-M>","command":openmaster,"menu":opengroup, "row":1,"col":1},
+             {"image":wordicon,"name":"Open Project","short":None,"command":openfile,"menu":projgroup, "row":1,"col":0},
+             {"image":switchicon,"name":"Change Project File","short":None,"command":changefile,"menu":projgroup, "row":1,"col":1},
+             {"image":minimiseicon,"name":"Minimise","short":"<Escape>","command":minimise,"menu":filegroup, "row":1,"col":10},
+            {"image":searchicon,"name":"Find","short":"<Control-f>","command":search,"menu":listgroup, "row":1,"col":0},
+            {"image":editicon,"name":"Edit","short":None,"command":edit,"menu":listgroup, "row":0,"col":0},
+             {"image":copyreficon,"name":"Copy full reference","short":None,"command":copyref,"menu":copygroup, "row":0,"col":1},
+             {"image":copyciteicon,"name":"Copy citation","short":None,"command":copycite,"menu":copygroup, "row":0,"col":2},
+             {"image":copyindexicon,"name":"Copy index number","short":None,"command":copyindex,"menu":copygroup, "row":1,"col":1},
+            {"image":delicon,"name":"Delete citation","short":None,"command":ask_delref,"menu":copygroup, "row":1,"col":2},
+             {"image":urlicon,"name":"Open paper URL","short":"<Control-u>","command":open_url,"menu":papergroup, "row":0,"col":0},
+             {"image":pdficon,"name":"Open paper PDF","short":"<Control-p>","command":open_pdf,"menu":papergroup, "row":1,"col":0},
+            {"image":sortupicon,"name":"Newest First","short":None,"command":sort_newest,"menu":sortgroup, "row":0,"col":0},
+            {"image":sortdownicon,"name":"Oldest First","short":None,"command":sort_oldest,"menu":sortgroup, "row":0,"col":1},
+            {"image":sortauthoricon,"name":"By Author","short":None,"command":sort_author,"menu":sortgroup, "row":1,"col":0},
+            {"image":sorttitleicon,"name":"By Title","short":None,"command":sort_title,"menu":sortgroup, "row":1,"col":1},
+             {"image":bookicon,"name":"Cite new book","short":"<Control-b>","command":book,"menu":citegroup, "row":0,"col":0},
+             {"image":journalicon,"name":"Cite new journal","short":"<Control-j>","command":journal,"menu":citegroup, "row":0,"col":1},
+             {"image":urlicon,"name":"Cite new webpage","short":"<Control-w>","command":web,"menu":citegroup, "row":1,"col":0},
+             {"image":dataicon,"name":"Cite new dataset","short":"<Control-d>","command":dataset,"menu":citegroup, "row":1,"col":1},
+             {"image":conficon,"name":"Cite new conference paper","short":None,"command":confpapers,"menu":citegroup, "row":0,"col":2},
+             {"image":edbookicon,"name":"Cite new edited book","short":"<Control-e>","command":edbook,"menu":citegroup, "row":1,"col":2},
+             {"image":chapicon,"name":"Cite new chapter in an edited book","short":"<Control-h>","command":chap,"menu":citegroup, "row":1,"col":3},
+             {"image":unpubicon,"name":"Cite new unpublished item","short":"<Control-u>","command":unpub,"menu":citegroup, "row":0,"col":3},
+             {"image":customicon,"name":"Manually create custom citation","short":None,"command":custom,"menu":citegroup, "row":1,"col":4},
+             {"image":perscommicon,"name":"Cite new personal communication","short":"<Control-p>","command":pers,"menu":citegroup, "row":0,"col":4},
+             {"image":reporticon,"name":"Cite new report","short":"<Control-r>","command":report,"menu":citegroup, "row":0,"col":5},
+             {"image":removeallauthors,"name":"Delete all authors in citation","short":None,"command":None,"menu":authorgroup, "row":0,"col":0},
+             {"image":writeicon,"name":"Write to file","short":"<Control-Return>","command":cite,"menu":writegroup, "row":1,"col":0},
+             {"image":soundicon,"name":"Read out loud","short":"<Control-r>","command":proofread,"menu":proofgroup, "row":0,"col":0},
+            {"image":usedicon,"name":"Check for unused citations","short":None,"command":check_unused,"menu":proofgroup, "row":1,"col":0}]
     #mod add new button here
-    c=0
 
-    global photo
+   
   
     for i in buttons:
-        try:
-            pass
-            b=Button(i["menu"],command=i["command"], image=i["image"],bg=bgcolor,relief="flat",bd=0,highlightthickness=0)
-        except:
-            pass
-            b=Button(i["menu"],command=i["command"], bg=bgcolor,relief="flat",highlightthickness=0)
-
+        b=Button(i["menu"],command=i["command"],image=i["image"],bg=bgcolor,relief="flat",bd=0,highlightthickness=0)
         b.grid(row=i["row"],column=i["col"],padx=5)
-        #tip = Hovertip(b,str(i["name"])+" ("+str(i["short"])+")")
-        c=c+1
+        tip = Hovertip(b,str(i["name"])+" ("+str(i["short"])+")")
         rootwin.bind(i["short"],i["command"])
-        try:
-            rootwin.bind(i["short2"],i["command"])
-        except:
-            pass
+       
 
-
+##show splash screen at startup
 def splash(event=None):
     global splashwin
     global splashthread
-
-
-    
-    
     splashwin=Tk()
     splashwin.overrideredirect(True)
     logo=PhotoImage(file='./Logo.png').subsample(1)
@@ -1356,7 +1397,17 @@ def splash(event=None):
     splashwin.after(3, makewin)
     splashwin.mainloop()
 
+## Bind keyboard shortcuts
+def shorts():
+    rootwin.bind("<Insert>",inscheck)
+    rootwin.bind("<Prior>", prevproj)
+    rootwin.bind("<Next>", nextproj)
+    rootwin.bind("<5>", nextproj) #button 5= scroll up #platdep
+    rootwin.bind("<4>", prevproj) #button 4= scroll down #platdep
+    rootwin.bind("<Tab>",inscheck)
+    PDFbox.bind("<1>", linkpdf)
 
+##run program
 def start():
     clean()
     load()
@@ -1366,12 +1417,13 @@ def start():
     makeboxes()
     makefields()
     makelabels()
-    rootwin.bind("<Insert>",inscheck)
     makeribbon()
     list_projects()
     list_citations()
     loadfile()
-    rootwin.bind("<Tab>",inscheck)
-    PDFbox.bind("<1>", linkpdf)
+    shorts()
+    prevproj()
+    
+    
 start()
 rootwin.mainloop()
