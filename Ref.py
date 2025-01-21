@@ -3,9 +3,8 @@ This program has been designed for it to be easy to add new media types. Places 
 #platdep indicates bits which are platform dependent
 '''
 
-
-
 from datetime import *
+
 import os
 from tkinter import *
 from tkinter import ttk
@@ -20,8 +19,6 @@ import threading
 from idlelib.tooltip import Hovertip
 
 os.chdir("/home/jonathan/Documents/Tech/Scripts/Ref")
-
-    
 
 
 ##Either read in the existing database or make a new one from scratch
@@ -111,9 +108,9 @@ def load():
 
 ## Remove old outputs 
 def clean():
-    os.system("rm *.txt")
-    os.system("rm *.mp3")
-    os.system("rm reflist*")
+    os.system("rm -f *.txt")
+    os.system("rm -f *.mp3")
+    os.system("rm -f reflist*")
     
 ### Search facility##
 def list_results(event=None):
@@ -153,7 +150,6 @@ def closesearch(event=None):
 def search(event=None):
     global searchbox
     global results
-    global var
     global searchwin
     ribbon.select(citationtab)
     var=StringVar()
@@ -163,7 +159,6 @@ def search(event=None):
     searchbox=Entry(searchwin)
 
     results=Listbox(searchwin)
-
 
     searchbox.pack()
     results.pack()
@@ -280,15 +275,12 @@ def list_projects():
     for x in t["Project"]:
         if x not in projects:
             projects.append(x)
-    try:
+   
+    if 'projdrop' in globals():
         projdrop.destroy()
-    except:
-        pass
+   
 
-    projframe=Frame(filegroup)
-    projframe.grid(row=0,column=0,columnspan=30,padx=10,pady=10)
-
-    projdrop=OptionMenu(projframe,curproj,*projects,command=change_proj)
+    projdrop=OptionMenu(filegroup,curproj,*projects,command=change_proj)
     projdrop.grid(row=0,column=0,columnspan=30)
 
     confdrop(projdrop)
@@ -420,7 +412,7 @@ def export_as_csv(event=None):
     pd.set_option('display.max_colwidth', None)
     export_table=(t[t["Project"]==cur_proj()][["HCitation","HReference"]])
     export_table.to_csv('reflistcsv.csv',sep=";",index=False)
-    os.system("libreoffice --calc reflistcsv.csv") #platdep
+    os.system("xdg-open reflistcsv.csv") #platdep
 
 def export_as_txt(event=None):
     pd.set_option('display.max_colwidth', None)
@@ -485,16 +477,9 @@ def makestyles():
 
 def makewin(event=None):
     global rootwin
-    #splashwin.quit()
-    #splashwin.destroy() #this line causes an error but the program doesn't work without it. No idea why. Needs fixing
     rootwin=Tk() #Tk window
     rootwin.title("Referencing")
     rootwin.configure(bg=bgcolor)
-    #splashwin.destroy()
-
-
-
-
 
 ## Add an author to the list of authors so that another can be added#
 
@@ -852,16 +837,28 @@ def assemble():
     #global year
     #global title
     def s(x):
-        return t[x].astype(str).str.replace("[","").str.replace("]","").str.replace("'","")
+        z=t[x].astype(str).str.replace("[","").str.replace("]","").str.replace("'","")
+        return z
+
     def j(media,thingtocount,ac,field,ref): #ac=authorcount
 
-        t.loc[((t["Media"]==media) & (t[thingtocount]==ac)), field]=ref #needs fixing - author count only counts authors not editors or chapter authors
-        
-    year=s("Year").astype(str)
+        t.loc[((t["Media"]==media) & (t[thingtocount]==ac)), field]=ref#needs fixing - author count only counts authors not editors or chapter authors
+
+    #numbers come out as decimals. This removes the decimal points from numeric fields
+    for y in s("Year").astype(str):
+        year=str(y).replace(".0","")
+    for y in s("Edition").astype(str):
+        ed=str(y).replace(".0","") 
+    for y in s("Volume").astype(str):
+        vol=str(y).replace(".0","")
+    for y in s("Issue").astype(str):
+        issue=str(y).replace(".0","") 
+    
+  
     title=s("Title")
 
-    book=" ("+year+") "+title+". "+s("Edition")+" edn. "+s("CityOfPub")+": "+s("Publisher")+"."
-    journal=" ("+year+") '"+title+"', "+s("Journal")+","+s("Volume")+"("+s("Issue")+"), pp. "+s("Pages")+". "+s("URL")
+    book=" ("+year+") "+title+". "+ed+" edn. "+s("CityOfPub")+": "+s("Publisher")+"."
+    journal=" ("+year+") '"+title+"', "+s("Journal")+","+vol+"("+issue+"), pp. "+s("Pages")+". "+s("URL")
   
 
     s0=s("Surname0")
@@ -961,7 +958,7 @@ def assemble():
     four_ed=es0+", "+ei0+" et al."
 
     def ed_chaps(n,a,b):
-        j("chap","EdCount",n,"HReference",a+" ("+year+") '"+s("Chap_Title")+"', in "+b+" (ed) "+title+". "+s("Edition")+". "+s("CityOfPub")+": "+s("Publisher")+", "+s("Pages")+".")
+        j("chap","EdCount",n,"HReference",a+" ("+year+") '"+s("Chap_Title")+"', in "+b+" (ed) "+title+". "+ed+". "+s("CityOfPub")+": "+s("Publisher")+", "+s("Pages")+".")
     def chap_1_author_1_ed():
         j("chap","EdCount",1,"HCitation",cs0+" ("+year+")")
         ed_chaps(1,one_chap,one_ed)
@@ -1120,7 +1117,12 @@ def cite(event=None):
     t.to_csv('ref.csv',sep=";") #columns=list(exclude.symmetric_difference(allcol)),sep=";")
     
     for x in t["HCitation"].tail(1):
-        rootwin.clipboard_append(x)
+        ribbon.select("Citation tab")
+        citedrop.set(x)
+        sync_cite()
+        copyref()
+        #rootwin.clipboard_clear()
+        #rootwin.clipboard_append(x)
     for x in t["HReference"].tail(1):
          messagebox.showinfo(title="Sucessfully Cited", message=x)
          
@@ -1267,8 +1269,6 @@ def makeribbon():
 
     # Place Ribbon in window #
     ribbon.grid(row=0,column=0,columnspan=500,sticky="w")
-
-
     # Make groups to organise buttons on tabs##
     filegroup=makegroup(filetab,"File",1)
     projgroup=makegroup(filetab,"Project File",2)
@@ -1383,19 +1383,6 @@ def makeribbon():
         b.grid(row=i["row"],column=i["col"],padx=5)
         tip = Hovertip(b,str(i["name"])+" ("+str(i["short"])+")")
         rootwin.bind(i["short"],i["command"])
-       
-
-##show splash screen at startup
-def splash(event=None):
-    global splashwin
-    global splashthread
-    splashwin=Tk()
-    splashwin.overrideredirect(True)
-    logo=PhotoImage(file='./Logo.png').subsample(1)
-    splashlabel=Button(splashwin,text="test",image=logo,relief="flat")
-    splashlabel.pack()
-    splashwin.after(3, makewin)
-    splashwin.mainloop()
 
 ## Bind keyboard shortcuts
 def shorts():
@@ -1407,23 +1394,39 @@ def shorts():
     rootwin.bind("<Tab>",inscheck)
     PDFbox.bind("<1>", linkpdf)
 
+def prog(n):
+    print(str(int((100/14)*n))+"%")
+
 ##run program
 def start():
     clean()
+    prog(1)
     load()
+    prog(2)
     makestyles()
+    prog(3)
     makewin()
+    prog(4)
     makeboxframes()
+    prog(5)
     makeboxes()
+    prog(6)
     makefields()
+    prog(7)
     makelabels()
+    prog(8)
     makeribbon()
+    prog(9)
     list_projects()
+    prog(10)
     list_citations()
+    prog(12)
     loadfile()
+    prog(13)
     shorts()
+    prog(14)
     prevproj()
-    
-    
+ 
+
 start()
 rootwin.mainloop()
