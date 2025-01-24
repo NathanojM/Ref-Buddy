@@ -4,7 +4,6 @@ This program has been designed for it to be easy to add new media types. Places 
 '''
 
 from datetime import *
-
 import os
 from tkinter import *
 from tkinter import ttk
@@ -119,6 +118,7 @@ def list_results(event=None):
     for x in t["HReference"]:
         if str(searchbox.get()).upper() in str(x).upper():
             results.insert(END,x)
+    
 def setresult(event=None):
     for i in results.curselection():
         ref.set(str(results.get(i)))
@@ -480,6 +480,8 @@ def makewin(event=None):
     rootwin=Tk() #Tk window
     rootwin.title("Referencing")
     rootwin.configure(bg=bgcolor)
+    #rootwin.wm_attributes("-topmost", True)
+
 
 ## Add an author to the list of authors so that another can be added#
 
@@ -531,9 +533,6 @@ def inscheck(event=None):
 def insclick(event):
     inscheck()
     
-    
-    
-
 
 
 ### Entry boxes for data#
@@ -541,7 +540,8 @@ def insclick(event):
 
 def makeboxframes():
     global boxframe
-    boxframe=Frame(rootwin,bg=bgcolor)
+ 
+    boxframe=Frame(citewin,bg=bgcolor)
     boxframe.grid(row=1,column=0)
 
 
@@ -650,6 +650,24 @@ def makefields():
             #mod: insert new box here
             #book,web,data field etc indicates whether it should show up for that medium. 1=show 0=hide. Add a new key for any new medium.
 
+def makecitewin():
+    global citewin
+    try:
+        citewin.withdraw()
+    except:
+        pass
+
+
+    
+    citewin=Tk()
+ 
+    citewin.title("Cite new")
+    citewin.configure(bg=bgcolor)
+    citewin.wm_attributes("-topmost", True)
+    #citewin.overrideredirect(1)
+    
+def closecitewin(event=None):
+    citewin.withdraw()
 
 
 def makelabels():
@@ -664,13 +682,17 @@ def makelabels():
 ## Populate window with fields necessary to cite selected media#
 
 def refresh(forwhat):
+    
+  
+    citewin.deiconify()
+    
     for widget in boxframe.winfo_children():
         try:
             widget.delete(0,END)
         except:
             pass
         widget.grid_forget()
-
+ 
 
     global surnamelist
     global ilist
@@ -703,12 +725,13 @@ def refresh(forwhat):
     def makeibox(c,f,com):
         i=Listbox(f,bg=accentcolor2,relief="flat",highlightthickness=0,width=5,justify="right")
         i.grid(row=1,column=0,rowspan=10)
-        b=Button(f,image=delpersonicon,command=com,relief="flat",bg=accentcolor2,highlightthickness=0)
+        b=Button(f,command=com,text="-",relief="flat",bg=accentcolor2,highlightthickness=0)
         b.grid(row=100,column=0,sticky="w")
 
 
         return i
     def makeframe(c,label):
+
         l=LabelFrame(boxframe,text=label,bg=accentcolor2,font=labelstyle)
         l.grid(row=1,column=c,rowspan=100,sticky="n")
         return l
@@ -729,35 +752,36 @@ def refresh(forwhat):
     ribbon.select(citetab)
 
 
-def citenew(m):
+def citenew(m,title):
     global media
     refresh(m)
     media=m
-    rootwin.title("Project: "+str(curproj.get())+"    Citing: "+str(media))
+    rootwin.title("Project: "+str(curproj.get()))
+    citewin.title("Citing New "+str(title)+" into "+str(projdrop.cget("text")))
 
 
 def book(event=None):
-    citenew("book")
+    citenew("book","Book")
 def journal(event=None):
-    citenew("journal")
+    citenew("journal","Journal")
 def web(event=None):
-    citenew("web")
+    citenew("web","Webpage")
 def dataset(event=None):
-    citenew("data")
+    citenew("data","Dataset")
 def confpapers(event=None):
-    citenew("conf")
+    citenew("conf","Conference Paper")
 def edbook(event=None):
-    citenew("ed")
+    citenew("ed","Edited Book")
 def chap(event=None):
-    citenew("chap")
+    citenew("chap","Chapter")
 def unpub(event=None):
-    citenew("unpub")
+    citenew("unpub","Unpublished Material")
 def custom(event=None):
-    citenew("custom")
+    citenew("custom","Custom Citation")
 def pers(event=None):
-    citenew("pers")
+    citenew("pers","Personal Communication")
 def report(event=None):
-    citenew("report")
+    citenew("report","Report")
 #mod add function here
 
 def edit(event=None):
@@ -821,12 +845,14 @@ def open_url(event=None):
 
 ## Clear boxes after media has been cited #
 def reset(event=None):
+    
     for widget in boxframe.winfo_children():
         try:
             widget.delete(0,END)
         except:
             pass
         widget.grid_forget()
+    
 
 
 
@@ -845,6 +871,7 @@ def assemble():
         t.loc[((t["Media"]==media) & (t[thingtocount]==ac)), field]=ref#needs fixing - author count only counts authors not editors or chapter authors
 
     #numbers come out as decimals. This removes the decimal points from numeric fields
+    
     for y in s("Year").astype(str):
         year=str(y).replace(".0","")
     for y in s("Edition").astype(str):
@@ -852,9 +879,7 @@ def assemble():
     for y in s("Volume").astype(str):
         vol=str(y).replace(".0","")
     for y in s("Issue").astype(str):
-        issue=str(y).replace(".0","") 
-    
-  
+        issue=str(y).replace(".0","")
     title=s("Title")
 
     book=" ("+year+") "+title+". "+ed+" edn. "+s("CityOfPub")+": "+s("Publisher")+"."
@@ -1117,14 +1142,15 @@ def cite(event=None):
     t.to_csv('ref.csv',sep=";") #columns=list(exclude.symmetric_difference(allcol)),sep=";")
     
     for x in t["HCitation"].tail(1):
-        ribbon.select("Citation tab")
-        citedrop.set(x)
-        sync_cite()
-        copyref()
-        #rootwin.clipboard_clear()
-        #rootwin.clipboard_append(x)
+        ribbon.select(citationtab)
+        #citedrop.set(x)
+        #sync_cite()
+        #copyref()
+        rootwin.clipboard_clear()
+        rootwin.clipboard_append(x)
     for x in t["HReference"].tail(1):
          messagebox.showinfo(title="Sucessfully Cited", message=x)
+    citewin.withdraw()
          
     reset()
 
@@ -1346,7 +1372,7 @@ def makeribbon():
              {"image":mastericon,"name":"Open master sheet","short":"<Control-M>","command":openmaster,"menu":opengroup, "row":1,"col":1},
              {"image":wordicon,"name":"Open Project","short":None,"command":openfile,"menu":projgroup, "row":1,"col":0},
              {"image":switchicon,"name":"Change Project File","short":None,"command":changefile,"menu":projgroup, "row":1,"col":1},
-             {"image":minimiseicon,"name":"Minimise","short":"<Escape>","command":minimise,"menu":filegroup, "row":1,"col":10},
+          
             {"image":searchicon,"name":"Find","short":"<Control-f>","command":search,"menu":listgroup, "row":1,"col":0},
             {"image":editicon,"name":"Edit","short":None,"command":edit,"menu":listgroup, "row":0,"col":0},
              {"image":copyreficon,"name":"Copy full reference","short":None,"command":copyref,"menu":copygroup, "row":0,"col":1},
@@ -1372,7 +1398,7 @@ def makeribbon():
              {"image":reporticon,"name":"Cite new report","short":"<Control-r>","command":report,"menu":citegroup, "row":0,"col":5},
              {"image":removeallauthors,"name":"Delete all authors in citation","short":None,"command":None,"menu":authorgroup, "row":0,"col":0},
              {"image":writeicon,"name":"Write to file","short":"<Control-Return>","command":cite,"menu":writegroup, "row":1,"col":0},
-             {"image":soundicon,"name":"Read out loud","short":"<Control-r>","command":proofread,"menu":proofgroup, "row":0,"col":0},
+             {"image":soundicon,"name":"Read out loud","short":None,"command":proofread,"menu":proofgroup, "row":0,"col":0},
             {"image":usedicon,"name":"Check for unused citations","short":None,"command":check_unused,"menu":proofgroup, "row":1,"col":0}]
     #mod add new button here
 
@@ -1383,16 +1409,23 @@ def makeribbon():
         b.grid(row=i["row"],column=i["col"],padx=5)
         tip = Hovertip(b,str(i["name"])+" ("+str(i["short"])+")")
         rootwin.bind(i["short"],i["command"])
+        citewin.bind(i["short"],i["command"])
 
 ## Bind keyboard shortcuts
 def shorts():
-    rootwin.bind("<Insert>",inscheck)
+    
     rootwin.bind("<Prior>", prevproj)
     rootwin.bind("<Next>", nextproj)
     rootwin.bind("<5>", nextproj) #button 5= scroll up #platdep
     rootwin.bind("<4>", prevproj) #button 4= scroll down #platdep
-    rootwin.bind("<Tab>",inscheck)
+    
     PDFbox.bind("<1>", linkpdf)
+    rootwin.bind("<Escape>",closecitewin)
+    citewin.bind("<Escape>",closecitewin)
+    citewin.bind("<Control-Return>",cite)
+    citewin.bind("<Insert>",inscheck)
+    citewin.bind("<Tab>",inscheck)
+ 
 
 def prog(n):
     print(str(int((100/14)*n))+"%")
@@ -1407,6 +1440,8 @@ def start():
     prog(3)
     makewin()
     prog(4)
+    makecitewin()
+    citewin.withdraw()
     makeboxframes()
     prog(5)
     makeboxes()
