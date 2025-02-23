@@ -1,5 +1,6 @@
 '''
-This program has been designed for it to be easy to add new media types. Places where it's necessary to modify the code are marked with #mod
+Citation management system, adapted to Sheffield's flavor of Harvard.
+It's easy to add new media types. Places where it's necessary to modify the code are marked with #mod
 #platdep indicates bits which are platform dependent
 '''
 
@@ -16,6 +17,8 @@ import pypandoc
 import time
 import threading
 from idlelib.tooltip import Hovertip
+
+#from pynput.mouse import Button, Controller
 
 os.chdir("/home/jonathan/Documents/Tech/Scripts/Ref")
 
@@ -97,10 +100,12 @@ def load():
         projfiles={"Project":["Panspermia"],"File":["/home/jonathan/Documents/University/Course notes/Home/Biology/Palaeontology/Panspermia/Panspermia expanded.odt"],"Default":True}
 
     t=pd.DataFrame(data)
+  
     files=pd.DataFrame(projfiles)
-
+    
     t.astype(str)
-
+    t.fillna(0,inplace=True)
+    
     t.to_csv('ref.csv',sep=";")
     files.to_csv('files.csv',sep=";")
     unnamed()
@@ -258,7 +263,7 @@ def change_proj(event=None):
     curproj.set(cur_proj())
     list_citations()
     loadfile()
-    rootwin.title("Project: "+str(curproj.get()))
+    rootwin.title(str(curproj.get()))
     
 def confdrop(x):
     x.config(bg=btncolor,fg="black")
@@ -284,8 +289,6 @@ def list_projects():
     projdrop.grid(row=0,column=0,columnspan=30)
 
     confdrop(projdrop)
-
-
 
     curproj.set(projects[0])
     rootwin.title("Project: "+str(curproj.get()))
@@ -374,12 +377,13 @@ def list_citations():
     except:
         pass
     citedrop=OptionMenu(listgroup,citation,*citations,command=sync_cite)
+    
     citedrop.grid(row=0,column=1,sticky="w")
 
     citation.set(citations[0])
 
     refdrop=OptionMenu(listgroup,ref,*refs,command=sync_ref)
-
+    
     refdrop.grid(row=1,column=1,sticky="w")
     ref.set(refs[0])
 
@@ -467,19 +471,30 @@ def makestyles():
     accentcolor="lightcyan1"
     accentcolor2="lightcyan2"
     textcolor="black"
-    activetabstyle=("Verdana",10,"bold underline")
+    activetabstyle=("Verdana",10,)
     bgtabstyle=("Verdana",10)
     groupstyle=("Verdana",6)
     labelstyle=("Verdana",10)
     entrystyle=("Verdana",10)
     btncolor="white"
 
-
+def exit(event=None):
+    pass
 def makewin(event=None):
     global rootwin
     rootwin=Tk() #Tk window
     rootwin.title("Referencing")
-    rootwin.configure(bg=bgcolor)
+    #rootwin.configure(bg=bgcolor)
+    rootwin.attributes("-alpha", 0)
+    rootwin.wm_attributes('-type', 'splash')
+    
+
+    
+    rootwin.geometry('%dx%d+%d+%d' % (500, 125, rootwin.winfo_screenwidth(), rootwin.winfo_screenheight()))
+
+    
+    
+
     #rootwin.wm_attributes("-topmost", True)
 
 
@@ -652,6 +667,7 @@ def makefields():
 
 def makecitewin():
     global citewin
+    global tlabel
     try:
         citewin.withdraw()
     except:
@@ -662,13 +678,26 @@ def makecitewin():
     citewin=Tk()
  
     citewin.title("Cite new")
+    
+    tlabel=Label(citewin,text="",bg=bgcolor,font=labelstyle)
+    tlabel.grid(row=0,column=0)
+  
+
+    
     citewin.configure(bg=bgcolor)
     citewin.wm_attributes("-topmost", True)
+    citewin.wm_attributes('-type', 'splash')
+    #citewin.focus_force()
+
+    closebtn=Button(citewin,text="❌",command=closecitewin,relief="flat",bg=bgcolor,highlightthickness=0)
+    closebtn.grid(row=0,column=1000,sticky="e")
+    citewin.bind("<FocusIn>",maximise)
     #citewin.overrideredirect(1)
+    
     
 def closecitewin(event=None):
     citewin.withdraw()
-
+    
 
 def makelabels():
 
@@ -676,6 +705,7 @@ def makelabels():
         x["default"]=str(x["text"])
         x["text"]=Label(boxframe,text=x["text"],bg="aliceblue",justify="right",font=labelstyle)
         x["box"].bind("<1>",insclick)
+        #x["box"].bind("<1>",maximise)
 
 
 
@@ -757,6 +787,7 @@ def citenew(m,title):
     refresh(m)
     media=m
     rootwin.title("Project: "+str(curproj.get()))
+    tlabel.configure(text="Citing new "+str(title)+" into "+str(curproj.get()))
     citewin.title("Citing New "+str(title)+" into "+str(projdrop.cget("text")))
 
 
@@ -806,13 +837,34 @@ def edit(event=None):
         
         
     
-   
+mini=False
 def minimise(event=None):
-    citenew("None")
-    authorframe.grid_forget()
-    editorframe.grid_forget()
-    chapterframe.grid_forget()
-    ribbon.select(filetab)
+    global mini
+    
+    if (rootwin.focus_get()) == None:
+   
+        
+        rootwin.geometry('%dx%d+%d+%d' % (180, 50, rootwin.winfo_screenwidth(), rootwin.winfo_screenheight()))
+        rootwin.wm_attributes("-topmost", True)
+    
+    
+def maximise(event=None):
+    global mini
+  
+    rootwin.wm_attributes("-topmost", True)
+    #rootwin.geometry('%dx%d+%d+%d' % (ribbon.winfo_width(), int(ribbon.winfo_height()), rootwin.winfo_screenwidth(), rootwin.winfo_screenheight()))
+
+    
+    if (ribbon.tab(ribbon.select(), "text"))=="💬":
+        rootwin.geometry('%dx%d+%d+%d' % (ribbon.winfo_width(), int(ribbon.winfo_height())+hoverstrip.winfo_height(), rootwin.winfo_screenwidth(), rootwin.winfo_screenheight()))
+        
+    else:
+        rootwin.geometry('%dx%d+%d+%d' % (ribbon.winfo_width()+vhoverstrip.winfo_width(), 150, rootwin.winfo_screenwidth(), rootwin.winfo_screenheight()))
+    
+    
+
+
+
 
 
 ## Link PDF of paper to reference #
@@ -871,19 +923,22 @@ def assemble():
         t.loc[((t["Media"]==media) & (t[thingtocount]==ac)), field]=ref#needs fixing - author count only counts authors not editors or chapter authors
 
     #numbers come out as decimals. This removes the decimal points from numeric fields
-    
-    for y in s("Year").astype(str):
-        year=str(y).replace(".0","")
-    for y in s("Edition").astype(str):
-        ed=str(y).replace(".0","") 
-    for y in s("Volume").astype(str):
-        vol=str(y).replace(".0","")
-    for y in s("Issue").astype(str):
-        issue=str(y).replace(".0","")
+    def makedec(field):
+        try:
+            t[field]=t[field].astype(int).astype(str)
+            return s(field)
+        except:
+            return(s(field))
+    year=makedec("Year")
+    ed=makedec("Edition")
+    vol=makedec("Volume")
+    #issue=makedec("Issue")
+    issue=s("Issue")
     title=s("Title")
 
+
     book=" ("+year+") "+title+". "+ed+" edn. "+s("CityOfPub")+": "+s("Publisher")+"."
-    journal=" ("+year+") '"+title+"', "+s("Journal")+","+vol+"("+issue+"), pp. "+s("Pages")+". "+s("URL")
+    journal=" ("+year+") '"+title+"', "+s("Journal")+", "+vol+" ("+issue+"), pp. "+s("Pages")+". "+s("URL")
   
 
     s0=s("Surname0")
@@ -1045,7 +1100,6 @@ def cite(event=None):
         if x[media]==1 and x["field"]!=None:
 
             keys.append(str(x["field"]))
-
             values.append(str(x["box"].get()))
     surnames=[]
     initials=[]
@@ -1055,8 +1109,6 @@ def cite(event=None):
     chap_initials=[]
 
     def append(sbox,ibox,s,i):
-
-
         for x in sbox.get(0,END):
             s.append(x)
         for x in ibox.get(0,END):
@@ -1268,6 +1320,8 @@ def makeribbon():
     global notegroup
     global projgroup
     global listgroup
+    global hoverstrip
+    global vhoverstrip
     
 
     ribbon=ttk.Notebook(rootwin)
@@ -1282,35 +1336,47 @@ def makeribbon():
         ribbon.add(f,text=label)
         return f
     
-    def makegroup(tab,label,col):
+    def makegroup(tab,label,r,col):
         l=LabelFrame(tab,text=label,bg=accentcolor2,font=groupstyle,labelanchor="s",bd=3,relief="flat")
-        l.grid(row=0,column=col,padx=10,pady=10)
+        l.grid(row=r,column=col,padx=10,pady=10)
         return l
 
     # Make tabs#
-    filetab=maketab("File")
-    citationtab=maketab("Citations")
-    citetab=maketab("Cite")
-    prooftab=maketab("Proofread")
+    filetab=maketab("🖿")
+    citationtab=maketab("💬")
+    citetab=maketab("🖉")
+    prooftab=maketab("👓")
 
     # Place Ribbon in window #
-    ribbon.grid(row=0,column=0,columnspan=500,sticky="w")
+    ribbon.grid(row=1,column=1,sticky="w")
     # Make groups to organise buttons on tabs##
-    filegroup=makegroup(filetab,"File",1)
-    projgroup=makegroup(filetab,"Project File",2)
-    opengroup=makegroup(filetab,"Open List",3)
-    notegroup=makegroup(filetab,"Notepad",4)
-    copygroup=makegroup(citationtab,"Copy",0)
-    searchgroup=makegroup(citationtab,"Search",100)
-    citegroup=makegroup(citetab,"Cite New",0)
-    authorgroup=makegroup(citetab,"Authors",1)
-    writegroup=makegroup(citetab,"Cite",2)
-    chargroup=makegroup(citetab,"Chars",10)
-    proofgroup=makegroup(prooftab,"Proofread",10)
-    papergroup=makegroup(citationtab,"Paper",1)
-    listgroup=makegroup(citationtab,"Citations",2)
-    sortgroup=makegroup(citationtab,"Sort",3)
-    listgroup=makegroup(citationtab,"",100)
+    filegroup=makegroup(filetab,"File",0,1)
+    projgroup=makegroup(filetab,"Project File",0,2)
+    opengroup=makegroup(filetab,"Open List",0,3)
+    notegroup=makegroup(filetab,"Notepad",0,4)
+    copygroup=makegroup(citationtab,"Copy",0,0)
+    searchgroup=makegroup(citationtab,"Search",0,100)
+    citegroup=makegroup(citetab,"Cite New",0,0)
+    authorgroup=makegroup(citetab,"Authors",0,1)
+    writegroup=makegroup(citetab,"Cite",0,2)
+    chargroup=makegroup(citetab,"Chars",0,10)
+    proofgroup=makegroup(prooftab,"Proofread",0,10)
+    papergroup=makegroup(citationtab,"Paper",0,1)
+    listgroup=makegroup(citationtab,"Citations",1,0)
+    listgroup.grid(row=1,column=0,padx=10,pady=10,columnspan=100)
+    sortgroup=makegroup(citationtab,"Sort",0,3)
+  
+    closebtn=Button(rootwin,text="❌",command=exit,relief="flat",bg=bgcolor,highlightthickness=0)
+    closebtn.grid(row=1,column=1,sticky="ne")
+
+    hoverstrip=Frame(rootwin,width=1000,height=10)
+    
+    #hoverstrip.attributes("-alpha",0)
+    hoverstrip.grid(row=0,column=0,columnspan=100)
+    
+
+    vhoverstrip=Frame(rootwin,width=10,height=100)
+    vhoverstrip.grid(row=0,column=0,rowspan=100)
 
 
     # Load icons for buttons#
@@ -1330,7 +1396,7 @@ def makeribbon():
     delpersonicon=makeicon('delpersonicon')
     journalicon=makeicon('journalicon')
     minimiseicon=makeicon('minimiseicon')
-    minimiseicon=makeicon('minimiseicon')
+    maximiseicon=makeicon('maximiseicon')
     newicon=makeicon('newicon')
     newicon=makeicon('newicon')
     pdficon=makeicon('pdficon')
@@ -1366,7 +1432,9 @@ def makeribbon():
    # Make buttons#
     buttons=[{"image":newicon,"name":"New project","short":"<Control-n>","command":newproj,"menu":filegroup, "row":1,"col":0},
              {"image":delicon,"name":"Delete project","short":None,"command":askdel,"menu":filegroup, "row":1,"col":1},
-             {"image":pinicon,"name":"Set as Default","short":None,"command":None,"menu":filegroup, "row":1,"col":3},
+             #{"image":minimiseicon,"name":"Minimise","short":None,"command":minimise,"menu":filegroup, "row":1,"col":2},
+             #{"image":maximiseicon,"name":"Maximise","short":None,"command":minimise,"menu":filegroup, "row":1,"col":3},
+             #{"image":pinicon,"name":"Set as Default","short":None,"command":None,"menu":filegroup, "row":1,"col":4},
              {"image":txticon,"name":"Open list as .txt","short":"<Control-o>","command":export_as_txt,"menu":opengroup, "row":0,"col":0},
              {"image":csvicon,"name":"Open list as .csv","short":"<Control-O>","command":export_as_csv,"menu":opengroup, "row":1,"col":0},
              {"image":mastericon,"name":"Open master sheet","short":"<Control-M>","command":openmaster,"menu":opengroup, "row":1,"col":1},
@@ -1396,20 +1464,23 @@ def makeribbon():
              {"image":customicon,"name":"Manually create custom citation","short":None,"command":custom,"menu":citegroup, "row":1,"col":4},
              {"image":perscommicon,"name":"Cite new personal communication","short":"<Control-p>","command":pers,"menu":citegroup, "row":0,"col":4},
              {"image":reporticon,"name":"Cite new report","short":"<Control-r>","command":report,"menu":citegroup, "row":0,"col":5},
-             {"image":removeallauthors,"name":"Delete all authors in citation","short":None,"command":None,"menu":authorgroup, "row":0,"col":0},
+             #{"image":removeallauthors,"name":"Delete all authors in citation","short":None,"command":None,"menu":authorgroup, "row":0,"col":0},
              {"image":writeicon,"name":"Write to file","short":"<Control-Return>","command":cite,"menu":writegroup, "row":1,"col":0},
              {"image":soundicon,"name":"Read out loud","short":None,"command":proofread,"menu":proofgroup, "row":0,"col":0},
             {"image":usedicon,"name":"Check for unused citations","short":None,"command":check_unused,"menu":proofgroup, "row":1,"col":0}]
     #mod add new button here
 
    
-  
+    
     for i in buttons:
         b=Button(i["menu"],command=i["command"],image=i["image"],bg=bgcolor,relief="flat",bd=0,highlightthickness=0)
         b.grid(row=i["row"],column=i["col"],padx=5)
         tip = Hovertip(b,str(i["name"])+" ("+str(i["short"])+")")
         rootwin.bind(i["short"],i["command"])
         citewin.bind(i["short"],i["command"])
+    #ribbon.bind("<Double-Button-1>",minimise)
+
+
 
 ## Bind keyboard shortcuts
 def shorts():
@@ -1419,12 +1490,27 @@ def shorts():
     rootwin.bind("<5>", nextproj) #button 5= scroll up #platdep
     rootwin.bind("<4>", prevproj) #button 4= scroll down #platdep
     
+    
     PDFbox.bind("<1>", linkpdf)
     rootwin.bind("<Escape>",closecitewin)
     citewin.bind("<Escape>",closecitewin)
     citewin.bind("<Control-Return>",cite)
+    rootwin.bind("<Control-Return>",cite)
     citewin.bind("<Insert>",inscheck)
     citewin.bind("<Tab>",inscheck)
+
+    
+    #rootwin.bind("<Motion>",maximise)
+
+    ribbon.bind("<Motion>",maximise)
+    
+    hoverstrip.bind("<Motion>",minimise)
+    vhoverstrip.bind("<Motion>",minimise)
+
+
+    #ribbon.bind("<<NotebookTabChanged>>",expand)
+    #rootwin.bind("<Leave>",maximise)
+    
  
 
 def prog(n):
@@ -1432,36 +1518,27 @@ def prog(n):
 
 ##run program
 def start():
+    print("Loading")
     clean()
-    prog(1)
     load()
-    prog(2)
     makestyles()
-    prog(3)
     makewin()
-    prog(4)
     makecitewin()
     citewin.withdraw()
     makeboxframes()
-    prog(5)
     makeboxes()
-    prog(6)
     makefields()
-    prog(7)
     makelabels()
-    prog(8)
     makeribbon()
-    prog(9)
     list_projects()
-    prog(10)
     list_citations()
-    prog(12)
     loadfile()
-    prog(13)
     shorts()
-    prog(14)
     prevproj()
+    minimise()
+    
  
 
 start()
 rootwin.mainloop()
+citewin.mainloop()
