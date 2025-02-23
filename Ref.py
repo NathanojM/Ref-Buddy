@@ -18,9 +18,6 @@ import time
 import threading
 from idlelib.tooltip import Hovertip
 
-#from pynput.mouse import Button, Controller
-
-os.chdir("/home/jonathan/Documents/Tech/Scripts/Ref")
 
 
 ##Either read in the existing database or make a new one from scratch
@@ -97,7 +94,7 @@ def load():
         #mod add new fields to this list
         
         
-        projfiles={"Project":["Panspermia"],"File":["/home/jonathan/Documents/University/Course notes/Home/Biology/Palaeontology/Panspermia/Panspermia expanded.odt"],"Default":True}
+        projfiles={"Project":["Panspermia"],"File":["./SampleDocument.odt"],"Default":True}
 
     t=pd.DataFrame(data)
   
@@ -844,7 +841,7 @@ def minimise(event=None):
     if (rootwin.focus_get()) == None:
    
         
-        rootwin.geometry('%dx%d+%d+%d' % (180, 50, rootwin.winfo_screenwidth(), rootwin.winfo_screenheight()))
+        rootwin.geometry('%dx%d+%d+%d' % (150, 25, rootwin.winfo_screenwidth(), rootwin.winfo_screenheight()))
         rootwin.wm_attributes("-topmost", True)
     
     
@@ -856,10 +853,10 @@ def maximise(event=None):
 
     
     if (ribbon.tab(ribbon.select(), "text"))=="💬":
-        rootwin.geometry('%dx%d+%d+%d' % (ribbon.winfo_width(), int(ribbon.winfo_height())+hoverstrip.winfo_height(), rootwin.winfo_screenwidth(), rootwin.winfo_screenheight()))
+        rootwin.geometry('%dx%d+%d+%d' % (ribbon.winfo_width(), int(ribbon.winfo_height()), rootwin.winfo_screenwidth(), rootwin.winfo_screenheight()))
         
     else:
-        rootwin.geometry('%dx%d+%d+%d' % (ribbon.winfo_width()+vhoverstrip.winfo_width(), 150, rootwin.winfo_screenwidth(), rootwin.winfo_screenheight()))
+        rootwin.geometry('%dx%d+%d+%d' % (ribbon.winfo_width(), 150, rootwin.winfo_screenwidth(), rootwin.winfo_screenheight()))
     
     
 
@@ -1320,8 +1317,7 @@ def makeribbon():
     global notegroup
     global projgroup
     global listgroup
-    global hoverstrip
-    global vhoverstrip
+   
     
 
     ribbon=ttk.Notebook(rootwin)
@@ -1369,20 +1365,12 @@ def makeribbon():
     closebtn=Button(rootwin,text="❌",command=exit,relief="flat",bg=bgcolor,highlightthickness=0)
     closebtn.grid(row=1,column=1,sticky="ne")
 
-    hoverstrip=Frame(rootwin,width=1000,height=10)
-    
-    #hoverstrip.attributes("-alpha",0)
-    hoverstrip.grid(row=0,column=0,columnspan=100)
-    
-
-    vhoverstrip=Frame(rootwin,width=10,height=100)
-    vhoverstrip.grid(row=0,column=0,rowspan=100)
 
 
     # Load icons for buttons#
     global delpersonicon
 
-    os.chdir("/home/jonathan/Documents/Tech/Scripts/Ref")
+    
     
     def makeicon(filename):
         return PhotoImage(file='./Icons/'+filename+'.png').subsample(1)
@@ -1499,17 +1487,11 @@ def shorts():
     citewin.bind("<Insert>",inscheck)
     citewin.bind("<Tab>",inscheck)
 
-    
-    #rootwin.bind("<Motion>",maximise)
+
 
     ribbon.bind("<Motion>",maximise)
-    
-    hoverstrip.bind("<Motion>",minimise)
-    vhoverstrip.bind("<Motion>",minimise)
-
-
-    #ribbon.bind("<<NotebookTabChanged>>",expand)
-    #rootwin.bind("<Leave>",maximise)
+    rootwin.bind("<FocusOut>",minimise)
+ 
     
  
 
