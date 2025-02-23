@@ -4,8 +4,13 @@ It's easy to add new media types. Places where it's necessary to modify the code
 #platdep indicates bits which are platform dependent
 '''
 
-from datetime import *
 import os
+
+packages=["gTTS","pandas","pypandoc","tkinter","datetime","threading","time","os","sys"]
+for i in packages:
+    os.system("pip install "+i+" --break-system-packages")
+from datetime import *
+
 from tkinter import *
 from tkinter import ttk
 from tkinter import filedialog
