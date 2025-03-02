@@ -5,10 +5,11 @@ It's easy to add new media types. Places where it's necessary to modify the code
 '''
 
 import os
-
+'''
 packages=["gTTS","pandas","pypandoc","tkinter","datetime","threading","time","os","sys"]
 for i in packages:
     os.system("pip install "+i+" --break-system-packages")
+'''
 from datetime import *
 
 from tkinter import *
