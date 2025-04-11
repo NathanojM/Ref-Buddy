@@ -1,17 +1,51 @@
+
 '''
 Citation management system, adapted to Sheffield's flavor of Harvard.
 It's easy to add new media types. Places where it's necessary to modify the code are marked with #mod
 #platdep indicates bits which are platform dependent
 '''
-
 import os
-'''
-packages=["gTTS","pandas","pypandoc","tkinter","datetime","threading","time","os","sys"]
-for i in packages:
-    os.system("pip install "+i+" --break-system-packages")
-'''
-from datetime import *
 
+#Check what platform is being used #platdep
+def getos():
+  
+    if os.name=="nt":
+        return "win"
+    elif os.name=="posix":
+        return "linux"
+        os.system("xdg-mime default org.gnome.TextEditor.desktop 'text/plain'")
+        os.system("xdg-mime default org.gnome.Evince.desktop 'application/pdf'")
+    else:
+        print("OS not supported")
+
+
+#install packages #platdepCTRL+Enter
+def getpackages():
+    try:
+        r=open("runbefore.run")
+        r.close()
+
+        
+
+    except:
+        packages=["gTTS","pandas","pypandoc","tkinter","datetime","threading","time","os","sys"]
+        if getos()=="linux":
+            print("Sudo privilages are required to install Pandoc")
+            os.system("sudo apt install pandoc")
+            os.system("sudo apt install python3-pip")
+            os.system("sudo apt install python3-tk")
+            os.system("sudo apt install idle")
+
+            for i in packages:
+                os.system("pip install "+i+" --break-system-packages")
+                
+        else:
+            os.system("pip install "+i)
+        r=open("runbefore.run","a")
+        r.close()
+getpackages()
+
+from datetime import *
 from tkinter import *
 from tkinter import ttk
 from tkinter import filedialog
@@ -23,8 +57,6 @@ import pypandoc
 import time
 import threading
 from idlelib.tooltip import Hovertip
-
-
 
 ##Either read in the existing database or make a new one from scratch
 def load(): 
@@ -115,10 +147,16 @@ def load():
 
 ## Remove old outputs 
 def clean():
-    os.system("rm -f *.txt")
-    os.system("rm -f *.mp3")
-    os.system("rm -f reflist*")
-    
+
+    if getos()=="linux":
+        os.system("rm -f *.txt")
+        os.system("rm -f *.mp3")
+        os.system("rm -f reflist*")
+    else:
+        os.system("del *.txt")
+        os.system("del *.mp3")
+        os.system("del reflist*")
+        
 ### Search facility##
 def list_results(event=None):
     results.delete(0,END)
@@ -129,28 +167,23 @@ def list_results(event=None):
     
 def setresult(event=None):
     for i in results.curselection():
-        ref.set(str(results.get(i)))
-
-        sync_ref()
-        searchwin.destroy()
-        copycite()
-
+            for x in t[t["HReference"]==str(results.get(i))]["Title"]:
+                ref.set(str(x))
+            for x in t[t["HReference"]==str(results.get(i))]["HCitation"]:
+                citation.set(str(x))
+            
 def gotobox(event=None):
     if "entry" in str(searchwin.focus_get()):
         results.focus_set()
     else:
-        for i in results.curselection():
-            ref.set(str(results.get(i)))
-            sync_ref()
+        setresult()
 
 def gotosearch(event=None):
     for i in results.curselection():
         if (len(results.get(i)))==0:
             searchbox.focus_set()
         else:
-            for i in results.curselection():
-                ref.set(str(results.get(i)))
-                sync_ref()
+            setresult()
 
 def closesearch(event=None):
     searchwin.destroy()
@@ -163,10 +196,11 @@ def search(event=None):
     var=StringVar()
     var.trace("w", lambda name, index, mode,var=var: callback(var))
     searchwin=Tk()
-    searchwin.title("")
+    searchwin.title("Search")
     searchbox=Entry(searchwin)
 
-    results=Listbox(searchwin)
+    results=Listbox(searchwin,width=100)
+    
 
     searchbox.pack()
     results.pack()
@@ -195,12 +229,10 @@ def sort_list(d):
         t=t[t["Project"]==curproj.get()].sort_values(by=["DateAccessed"],ascending=True)
     list_citations()
     load()
-
 def sort_newest():
     sort_list("newest")
 def sort_oldest():
     sort_list("oldest")
-
 def sort_author():
     global t
     t=t[t["Project"]==curproj.get()].sort_values(by=["HCitation"],ascending=True)
@@ -244,9 +276,7 @@ def makenewproj():
     curproj.set(str(newprojbox.get()))
     newprojwin.destroy()
 
-
 ## Delete project #
-
 def askdel():
     areyousure(delproject,"project")
 def delproject():
@@ -256,8 +286,6 @@ def delproject():
     t.to_csv('ref.csv',sep=";")
     load()
     list_projects()
-
-
 
 ## List of projects#
 def change_proj(event=None):
@@ -303,8 +331,7 @@ def move(n):
         curproj.set(projects[int(projects.index(str(cur_proj())))+n])
     except:
         curproj.set(projects[0])
-    change_proj()
-    
+    change_proj()    
 def nextproj(event=None):
     move(1)
 def prevproj(event=None):
@@ -324,12 +351,18 @@ def loadfile():
         files.to_csv('files.csv',sep=";")
     display_proj()
 
+def platopen(i): #platdep
+    if getos()=="linux":
+        command=('xdg-open "'+str(i)+'"')
+    else:
+        command='"'+str(i)+'"'
+    os.system(command)
+    print(command)
+
 def openfile():
     loadfile()
     for x in filelist:
-        os.system('xdg-open "'+str(x)+'"') #platdep
-
-
+        platopen(x)
 
 def changefile(event=None):
 
@@ -392,7 +425,6 @@ def list_citations():
 
     confdrop(refdrop)
     confdrop(citedrop)
-    
 
 ##get selected citation
 def cur_cite():
@@ -408,24 +440,23 @@ def makestring(x):
 def sync_cite(event=None):
     i=int(makestring(t[t["HCitation"]==cur_cite()]))
     ref.set(t.iloc[i]["Title"])
-
 def sync_ref(event=None):
     i=int(makestring(t[t["Title"]==cur_ref()]))
     citation.set(t.iloc[i]["HCitation"])
-
 
 ## Export reference list##
 def export_as_csv(event=None):
     pd.set_option('display.max_colwidth', None)
     export_table=(t[t["Project"]==cur_proj()][["HCitation","HReference"]])
     export_table.to_csv('reflistcsv.csv',sep=";",index=False)
-    os.system("xdg-open reflistcsv.csv") #platdep
+    platopen("reflistcsv.csv")
 
 def export_as_txt(event=None):
     pd.set_option('display.max_colwidth', None)
     export_table=(t[t["Project"]==cur_proj()]["HReference"])
-    export_table.to_csv('reflisttxt.csv',sep=";",index=False,header=None)
-    os.system("gnome-text-editor reflisttxt.csv") #platdep
+    export_table.to_csv('reflisttxt.txt',sep=";",index=False,header=None)
+    
+    platopen("reflisttxt.txt")
 
 ##Open master sheet
 def openmaster(event=None):
@@ -435,14 +466,15 @@ def openmaster(event=None):
 
 def copyref():
     rootwin.clipboard_clear()
-    rootwin.clipboard_append(cur_ref()) #change
+    for x in t[t["Title"]==cur_ref()]["HReference"]:
+        
+        rootwin.clipboard_append(str(x))
 def copycite():
     rootwin.clipboard_clear()
     rootwin.clipboard_append(cur_cite())
 def copyindex():
     rootwin.clipboard_clear()
     rootwin.clipboard_append(int(makestring(t[t["HCitation"]==cur_cite()])))
-
 
 ## Delete a reference#
 def ask_delref():
@@ -482,7 +514,7 @@ def makestyles():
     btncolor="white"
 
 def exit(event=None):
-    pass
+    quit()
 def makewin(event=None):
     global rootwin
     rootwin=Tk() #Tk window
@@ -495,7 +527,7 @@ def makewin(event=None):
     
     rootwin.geometry('%dx%d+%d+%d' % (500, 125, rootwin.winfo_screenwidth(), rootwin.winfo_screenheight()))
 
-    
+
     
 
     #rootwin.wm_attributes("-topmost", True)
@@ -550,8 +582,6 @@ def inscheck(event=None):
 
 def insclick(event):
     inscheck()
-    
-
 
 ### Entry boxes for data#
 #'cap' indicates whether data from that box should be auto capitalised.
@@ -561,8 +591,6 @@ def makeboxframes():
  
     boxframe=Frame(citewin,bg=bgcolor)
     boxframe.grid(row=1,column=0)
-
-
 
 def makebox():
     global boxframe
@@ -697,11 +725,9 @@ def makecitewin():
     citewin.bind("<FocusIn>",maximise)
     #citewin.overrideredirect(1)
     
-    
 def closecitewin(event=None):
     citewin.withdraw()
     
-
 def makelabels():
 
     for x in boxes:
@@ -709,8 +735,6 @@ def makelabels():
         x["text"]=Label(boxframe,text=x["text"],bg="aliceblue",justify="right",font=labelstyle)
         x["box"].bind("<1>",insclick)
         #x["box"].bind("<1>",maximise)
-
-
 
 ## Populate window with fields necessary to cite selected media#
 
@@ -784,7 +808,6 @@ def refresh(forwhat):
 
     ribbon.select(citetab)
 
-
 def citenew(m,title):
     global media
     refresh(m)
@@ -792,7 +815,6 @@ def citenew(m,title):
     rootwin.title("Project: "+str(curproj.get()))
     tlabel.configure(text="Citing new "+str(title)+" into "+str(curproj.get()))
     citewin.title("Citing New "+str(title)+" into "+str(projdrop.cget("text")))
-
 
 def book(event=None):
     citenew("book","Book")
@@ -836,10 +858,6 @@ def edit(event=None):
         if "NaN" in str(b["box"].get()):
             b["box"].delete(0,END)
             
-          
-        
-        
-    
 mini=False
 def minimise(event=None):
     global mini
@@ -849,7 +867,6 @@ def minimise(event=None):
         
         rootwin.geometry('%dx%d+%d+%d' % (150, 25, rootwin.winfo_screenwidth(), rootwin.winfo_screenheight()))
         rootwin.wm_attributes("-topmost", True)
-    
     
 def maximise(event=None):
     global mini
@@ -864,12 +881,6 @@ def maximise(event=None):
     else:
         rootwin.geometry('%dx%d+%d+%d' % (ribbon.winfo_width(), 150, rootwin.winfo_screenwidth(), rootwin.winfo_screenheight()))
     
-    
-
-
-
-
-
 ## Link PDF of paper to reference #
 def linkpdf(event):
     
@@ -878,25 +889,24 @@ def linkpdf(event):
         p=filedialog.askopenfilename(title="Link PDF",filetypes=types,initialdir=(x.replace(plabel.cget("text"),"")))
     PDFbox.insert(0,p)
 
-
 ## Open PDF or URL linked to reference #
 def open_pdf(event=None):
     x=""
     for x in t[t["Title"]==cur_ref()]["PDF"]:
 
-        if "nan" in str(x):
+        if "nan" in str(x) or "0" in str(x):
             p=filedialog.askopenfilename(title="Link PDF")
             t.loc[(t["Title"]==cur_ref()), "PDF"]=p
             t.to_csv('ref.csv',sep=";")
         else:
-            os.system('xdg-open "'+str(x)+'"') #platdep
+            
+            platopen(x)
 
 def open_url(event=None):
     x=""
     for x in t[t["Title"]==cur_ref()]["URL"]:
-        os.system('xdg-open "'+str(x)+'"') #platdep
-
-
+        
+        platopen(str(x))
 
 ## Clear boxes after media has been cited #
 def reset(event=None):
@@ -907,10 +917,7 @@ def reset(event=None):
         except:
             pass
         widget.grid_forget()
-    
-
-
-
+  
 ## Assemble the citation into the right syntax#
 def assemble():
     
@@ -961,9 +968,15 @@ def assemble():
     cs0=s("Chap_Surname0")
     cs1=s("Chap_Surname1")
     cs2=s("Chap_Surname2")
+    cs3=s("Chap_Surname3")
+    cs4=s("Chap_Surname4")
+    cs5=s("Chap_Surname5")
     ci0=s("Chap_Initial0")
     ci1=s("Chap_Initial1")
     ci2=s("Chap_Initial2")
+    ci3=s("Chap_Initial3")
+    ci4=s("Chap_Initial4")
+    ci5=s("Chap_Initial5")
 
 
 
@@ -1030,6 +1043,7 @@ def assemble():
                 j("ed","EdCount",x,"HCitation",es0+" et al. ("+year+")")
                 j("ed","EdCount",x,"HReference",es0+", "+ei0+" et al. (eds.)"+book)
 
+
     one_chap=cs0+", "+ci0
     two_chap=cs0+", "+ci0+" and "+cs1+", "+ci1
     three_chap=cs0+", "+ci0+", "+cs1+", "+ci1+" and "+cs2+", "+ci2
@@ -1042,12 +1056,20 @@ def assemble():
 
     def ed_chaps(n,a,b):
         j("chap","EdCount",n,"HReference",a+" ("+year+") '"+s("Chap_Title")+"', in "+b+" (ed) "+title+". "+ed+". "+s("CityOfPub")+": "+s("Publisher")+", "+s("Pages")+".")
+    
     def chap_1_author_1_ed():
-        j("chap","EdCount",1,"HCitation",cs0+" ("+year+")")
-        ed_chaps(1,one_chap,one_ed)
-    def chap_1_author_2_ed():
-        j("chap","EdCount",2,"HCitation",cs0+" ("+year+")")
-        ed_chaps(2,one_chap,two_ed)
+
+        def counteds(n,y,z):
+            j("chap","EdCount",n,"HCitation",cs0+" ("+year+")")
+            ed_chaps(n,y,z)
+        counteds(1,one_chap,one_ed)
+        counteds(2,one_chap,two_ed)
+        counteds(3,one_chap,three_ed)
+        for i in range(4,100):
+            counteds(i,one_chap,four_ed)
+
+
+ 
 
     def unpub_1_author():
         j("unpub","AuthorCount",1,"HCitation",s0+" ("+year+")")
@@ -1079,14 +1101,12 @@ def assemble():
     ed_3_authors()
     ed_4_authors()
     chap_1_author_1_ed()
-    chap_1_author_2_ed()
     unpub_1_author()
     custom()
     cite_pers()
     cite_report()
     
     #mod list function here
-
 
 ## Write the information entered into the boxes to the dataframe##
 #This puts the data into fields in the table, but the citation is assembled in the assemble() function.
@@ -1209,10 +1229,6 @@ def cite(event=None):
          
     reset()
 
-
-
-
-
 ## Check for any citations that have been cited in Ref Buddy but haven't been used in the project #
 def check_unused(): #find project file and convert to txt
     for x in files[files["Project"]==cur_proj()]["File"]:
@@ -1240,61 +1256,66 @@ def check_unused(): #find project file and convert to txt
         if x not in filestring:
             makeusedlabel("Not Used","✕","red")
 
-
-
-
 ## Read project out loud
 #if this doesn't work try running sudo apt install pandoc
+#VS code can't open VLC properly. Run in terminal.
 
-
-def check_prog(): #checks whether the function has finished and stops the progress bar
-    if proofthread.is_alive():
-        rootwin.after(1, check_prog)
-    else:
-        prog.destroy()
-
-def proofread(event=None): #puts the proofread function in a separate thread so that the progress bar can work
-    global proofthread
-    global prog
-    
-    prog=ttk.Progressbar(rootwin,orient=HORIZONTAL,length=500,mode='determinate')
-    prog.grid(row=100,column=0,columnspan=100)
-    proofthread=threading.Thread(target=generate_audio)
-    proofthread.daemon=True
-    proofthread.start()
-    rootwin.after(1, check_prog)
-
-def inc(n):
-    for x in range(n):
-        prog ['value']=prog ['value']+1
-        time.sleep(0.001)
-def generate_audio(event=None): #generates the mp3
+def proofread(event=None): #generates the mp3
 
     m="This tool may take several minutes to run. A 500 word document will take approximately 45 seconds to generate."
-    messagebox.showinfo(title="Slow Process", message=m)
-    prog ['value']=0
+    #messagebox.showinfo(title="Slow Process", message=m)
+    print("Slow process. Please wait...")
+    
 
     for x in files[files["Project"]==cur_proj()]["File"]:
-        output = pypandoc.convert_file(x, 'plain', outputfile="readoutloud.txt")
-        assert output == ""
-    inc(20)
-    file=open("readoutloud.txt")
-    lines=""
-    for x in file.readlines():
-        lines=lines+" "+x
-    inc(10)
-    lines=lines.replace("-"," ")
-    lines=lines.replace("|"," ")
-    lines=lines.replace("+"," ")
-    lines=lines.split("References")[0]
-    inc(10)
-    speak = gTTS(text=str(lines), lang='en', slow=False)
-    inc(35)
-    speak.save("readoutloud.mp3")
-    inc(25)
-    os.system("xdg-open readoutloud.mp3") #platdep
+        if "()" in str(x):
+            print("No file selected")
+            break
+        else:
+            os.system("unset GTK_PATH") #
+            output = pypandoc.convert_file(x, 'plain', outputfile="readoutloud.txt")
+            print("Converting to txt")
+  
+            file=open("readoutloud.txt")
+            lines=""
+            table=False
+            print("Reading lines")
+            for x in file.readlines():
+                print(x)
+                if "---" in str(x) and table==False:
+                    table=True
+                    print("Table ignored")
+                elif "---" in str(x) and table==True:
+                    table=False
+            
+                if table==False:
+                    lines=lines+" "+x
+                    print(x)
+                    if(len(str(x).split(" ")))<3:
+                        lines=lines+"."
+                        
+            print("Cleaning text")
+            lines=lines.replace("|"," ")
+            lines=lines.replace("+"," ")
+            lines=lines.replace("\n\n",".")
+            lines=lines.replace("\n"," ")
+            lines=lines.replace("  "," ")
+            lines=lines.replace(" .",".")
+            lines=lines.replace("..",".")
+            lines=lines.replace(". .",".")
+            lines=lines.replace("...",".")
+            lines=lines.replace("-"," ")
+            print("Removing refrence list")
+            lines=lines.split("References")[0]
+            print(lines)
+            
 
-
+            print("Generating audio")
+            speak = gTTS(text=str(lines), lang='en', slow=False)
+            print("Saving mp3")
+            speak.save("readoutloud.mp3")
+            print("Done")
+            platopen("readoutloud.mp3") #platdependent
 
 def areyousure(com,word):
     conf=messagebox.askquestion("Are you sure", "Do you really want to delete this "+word+"?")
@@ -1302,7 +1323,6 @@ def areyousure(com,word):
         com()
     else:
         pass
-
 
 ## Make menu bar##
 
@@ -1357,7 +1377,7 @@ def makeribbon():
     opengroup=makegroup(filetab,"Open List",0,3)
     notegroup=makegroup(filetab,"Notepad",0,4)
     copygroup=makegroup(citationtab,"Copy",0,0)
-    searchgroup=makegroup(citationtab,"Search",0,100)
+   
     citegroup=makegroup(citetab,"Cite New",0,0)
     authorgroup=makegroup(citetab,"Authors",0,1)
     writegroup=makegroup(citetab,"Cite",0,2)
@@ -1367,6 +1387,10 @@ def makeribbon():
     listgroup=makegroup(citationtab,"Citations",1,0)
     listgroup.grid(row=1,column=0,padx=10,pady=10,columnspan=100)
     sortgroup=makegroup(citationtab,"Sort",0,3)
+    editgroup=makegroup(citationtab,"Edit",0,4)
+    searchgroup=makegroup(citationtab,"Search",0,5)
+    
+
   
     closebtn=Button(rootwin,text="❌",command=exit,relief="flat",bg=bgcolor,highlightthickness=0)
     closebtn.grid(row=1,column=1,sticky="ne")
@@ -1435,8 +1459,8 @@ def makeribbon():
              {"image":wordicon,"name":"Open Project","short":None,"command":openfile,"menu":projgroup, "row":1,"col":0},
              {"image":switchicon,"name":"Change Project File","short":None,"command":changefile,"menu":projgroup, "row":1,"col":1},
           
-            {"image":searchicon,"name":"Find","short":"<Control-f>","command":search,"menu":listgroup, "row":1,"col":0},
-            {"image":editicon,"name":"Edit","short":None,"command":edit,"menu":listgroup, "row":0,"col":0},
+            {"image":searchicon,"name":"Find","short":"<Control-f>","command":search,"menu":sortgroup, "row":1,"col":100},
+            {"image":editicon,"name":"Edit","short":None,"command":edit,"menu":copygroup, "row":1,"col":100},
              {"image":copyreficon,"name":"Copy full reference","short":None,"command":copyref,"menu":copygroup, "row":0,"col":1},
              {"image":copyciteicon,"name":"Copy citation","short":None,"command":copycite,"menu":copygroup, "row":0,"col":2},
              {"image":copyindexicon,"name":"Copy index number","short":None,"command":copyindex,"menu":copygroup, "row":1,"col":1},
@@ -1474,8 +1498,6 @@ def makeribbon():
         citewin.bind(i["short"],i["command"])
     #ribbon.bind("<Double-Button-1>",minimise)
 
-
-
 ## Bind keyboard shortcuts
 def shorts():
     
@@ -1497,9 +1519,6 @@ def shorts():
 
     ribbon.bind("<Motion>",maximise)
     rootwin.bind("<FocusOut>",minimise)
- 
-    
- 
 
 def prog(n):
     print(str(int((100/14)*n))+"%")
@@ -1507,6 +1526,7 @@ def prog(n):
 ##run program
 def start():
     print("Loading")
+    getos()
     clean()
     load()
     makestyles()
@@ -1524,8 +1544,6 @@ def start():
     shorts()
     prevproj()
     minimise()
-    
- 
 
 start()
 rootwin.mainloop()
