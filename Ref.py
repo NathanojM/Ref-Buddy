@@ -18,7 +18,7 @@ def getos():
         print("OS not supported")
 
 
-#install packages #platdepCTRL+Enter
+#install packages #platdep
 def getpackages():
     try:
         r=open("runbefore.run")
@@ -229,6 +229,8 @@ def search(event=None):
 ## Sort reference list #
 def sort_list(d):
     global t
+    t.loc[t["DateAccessed"] == "0", "DateAccessed"] = "01-01-2000" #set any null dates to 1/1/2000
+    t.to_csv('ref.csv',sep=";")
     t['DateAccessed'] = pd.to_datetime(t['DateAccessed'],dayfirst=True)
 
     if d=="newest":
@@ -274,11 +276,6 @@ def unnamed():
 
 ## Make new project #
 
-def makegreen():
-    style = ttk.Style().configure("Custom.TCombobox", fieldbackground="lightgreen")
-    projdrop.configure(style="Custom.TCombobox")
-   
- 
 def makewhite(event=None):
     style = ttk.Style().configure("Custom.TCombobox", fieldbackground="white")
     curproj.set(projdrop.get())
@@ -291,9 +288,6 @@ def newproj(event=None):
     projdrop.delete(0,END)
     list_citations()
     
-   
-    
-
 def nonewproj(event=None):
     for x in t.loc[t["Title"]==refdrop.get()]["Project"]:
         curproj.set(x)
@@ -315,16 +309,14 @@ def delproject():
 ## List of projects#
 def change_proj(event=None):
     global projdrop
-
     curproj.set(cur_proj())
     list_citations()
-    #loadfile()
     rootwin.title(str(curproj.get()))
     show_proj_file()
 
+#Link document to project
 def change_proj_file(event=None):
     p=filedialog.askopenfilename(title="Link Project File")
-    print(p)
     files.loc[files["Project"] == projdrop.get(), "File"] = p
     show_proj_file()
 
@@ -336,13 +328,9 @@ def show_proj_file():
         filedrop.delete(0,END)
         filedrop.insert(0,x)
         filedrop.bind("<1>",change_proj_file)
-    #filedrop.bind()
-        
-    
-    
 
+# Make combobox template
 def makedrop(List,var,function,position,r,c):
-    
         drop=ttk.Combobox(position,textvariable=var,width=50,font=dropstyle)
         drop.bind("<<ComboboxSelected>>", function)
         drop['values'] = List
@@ -351,7 +339,7 @@ def makedrop(List,var,function,position,r,c):
         return drop
 
 
-
+#List all projects in the database
 def list_projects():
     global curproj
     global projdrop
@@ -359,15 +347,17 @@ def list_projects():
     curproj=StringVar(rootwin)
     projects=[]
 
-    for x in t["Project"]:
-        if x not in projects:
-            projects.append(x)
-   
+    for i in t["Project"].unique():
+        projects.append(i)
+
+    
+    for x in t[t["hidden"]=="True"]["Project"].unique():
+        projects.remove(x) 
     if 'projdrop' in globals():
         projdrop.destroy()
    
 
-    projdrop=makedrop(projects,curproj,change_proj,listgroup,0,0)
+    projdrop=makedrop(projects,curproj,change_proj,rootwin,2,1)
     for x in ["A",'B','C','D','E','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','a','b','c','d','e','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']:
         projdrop.bind("<"+x+">", lambda event: list_citations())
     projdrop.bind("<Escape>", nonewproj)
@@ -387,10 +377,6 @@ def nextproj(event=None):
     move(1)
 def prevproj(event=None):
     move(-1)
-
-## Open project document#
-
-
 
 
 ## List all recorded citations #
@@ -437,6 +423,7 @@ def cur_ref():
     return refdrop.get()
 def cur_proj():
     return projdrop.get()
+
 ### Keep the citation and reference boxes in sync, so that they always show text from the same citation##
 
 def makestring(x):
@@ -448,6 +435,7 @@ def sync_ref(event=None):
     i=int(makestring(t[t["Title"]==cur_ref()]))
     citation.set(t.iloc[i]["HCitation"])
 
+# open file
 def platopen(i): #platdep
     if getos()=="linux":
         command=('xdg-open "'+str(i)+'"')
@@ -468,37 +456,39 @@ def export_as_txt(event=None):
     export_table=(t[t["Project"]==cur_proj()]["HReference"])
     export_table.to_csv('reflisttxt.txt',sep=";",index=False,header=None)
     platopen("reflisttxt.txt")
+
 ##Open master sheet
 def openmaster(event=None):
     x="Opening backend database for manual editing. \nRemoving data may permanently break the database. \nThis should only be used to correct data entry mistakes. \nTo export an independent reference list, use the export tools on the file tab.\n\nRefBuddy uses semicolons as the field deliminator, but Excel will assume that it is separated by commas - be sure to change this."
     messagebox.showwarning(title="Proceed with caution", message=x)
     os.system("xdg-open ref.csv")
 
-def copyref():
+#copy citations to clipbaord
+def copyref(): #copy whole reference
     rootwin.clipboard_clear()
     for x in t[t["Title"]==cur_ref()]["HReference"]:
         
         rootwin.clipboard_append(str(x))
-def copycite():
+def copycite(): #copy citation
     rootwin.clipboard_clear()
     rootwin.clipboard_append(f"({cur_cite()})")
 
-def copycite_md():
-    rootwin.clipboard_clear()
-    rootwin.clipboard_append(f"*({cur_cite()})*")
-def copyend():
+
+def copyend(): #copy citation as markdown, as if it were at the end of a sentence.
     rootwin.clipboard_clear()
     for x in t[t["Title"]==cur_ref()]["URL"]:
         rootwin.clipboard_append(f"*[({cur_cite()})]({x})*")
-def copybeg():
+def copybeg(): #copy citation as markdown, as if it were at the beginning of a sentence.
     rootwin.clipboard_clear()
     for x in t[t["Title"]==cur_ref()]["URL"]:
         rootwin.clipboard_append(f"*[{cur_cite().replace(', ',' (')})]({x})* ")
-     
 
-def copyindex():
+def copyindex(): #copy citation index number
     rootwin.clipboard_clear()
     rootwin.clipboard_append(int(makestring(t[t["HCitation"]==cur_cite()])))
+def citation_needed(): #copy statement in markdown saying 'citation needed'.
+    rootwin.clipboard_clear()
+    rootwin.clipboard_append("==Citation Needed==")
 
 ## Delete a reference#
 def ask_delref():
@@ -512,7 +502,7 @@ def delref():
     t.to_csv('ref.csv',sep=";")
     list_citations()
 
-## Make window#
+#style template for window
 
 def makestyles():
     global bgcolor
@@ -526,6 +516,7 @@ def makestyles():
     global entrystyle
     global dropstyle
 
+    
     bgcolor="aliceblue"
     accentcolor="lightcyan1"
     accentcolor2="lightcyan2"
@@ -538,19 +529,22 @@ def makestyles():
     entrystyle=("Verdana",10)
     btncolor="white"
 
+#quit program
 def exit(event=None):
     quit()
+
+#make window
 def makewin(event=None):
     global rootwin
-    rootwin=Tk() #Tk window
-    rootwin.title("Referencing")
-    #rootwin.configure(bg=bgcolor)
-    rootwin.attributes("-alpha", 0)
+    global xpos
+    global ypos
+    rootwin=Tk() 
+    rootwin.title("Referencing")    
+    #rootwin.attributes("-alpha", 0)
     rootwin.wm_attributes('-type', 'splash')
-    
-
-    
-    rootwin.geometry('%dx%d+%d+%d' % (500, 125, rootwin.winfo_screenwidth(), rootwin.winfo_screenheight()))
+    ypos=rootwin.winfo_screenheight()
+    xpos=rootwin.winfo_screenwidth()
+    rootwin.geometry('%dx%d+%d+%d' % (500, 125, xpos, ypos))
 
 
 ## Add an author to the list of authors so that another can be added#
@@ -748,11 +742,12 @@ def makecitewin():
     citewin.configure(bg=bgcolor)
     citewin.wm_attributes("-topmost", True)
     #citewin.wm_attributes('-type', 'splash')
+    #rootwin.geometry('%dx%d+%d+%d' % (500, 125, xpos, rootwin.winfo_screenheight()))
     #citewin.focus_force()
 
     closebtn=Button(citewin,text="❌",command=closecitewin,relief="flat",bg=bgcolor,highlightthickness=0)
     closebtn.grid(row=0,column=1000,sticky="e")
-    citewin.bind("<FocusIn>",maximise)
+    #citewin.bind("<FocusIn>",maximise)
     #citewin.overrideredirect(1)
     
 def closecitewin(event=None):
@@ -893,7 +888,7 @@ def minimise(event=None):
         if (rootwin.focus_get()) is None:
     
             
-            rootwin.geometry('%dx%d+%d+%d' % (150, 25, rootwin.winfo_screenwidth(), rootwin.winfo_screenheight()))
+            rootwin.geometry('%dx%d+%d+%d' % (150, 25, xpos, ypos))
             rootwin.wm_attributes("-topmost", True)
     except:
         pass
@@ -904,10 +899,11 @@ def maximise(event=None):
 
     
     if (ribbon.tab(ribbon.select(), "text"))=="💬":
-        rootwin.geometry('%dx%d+%d+%d' % (ribbon.winfo_width(), int(ribbon.winfo_height()), rootwin.winfo_screenwidth(), rootwin.winfo_screenheight()))
+        rootwin.geometry('%dx%d+%d+%d' % (ribbon.winfo_width(), int(ribbon.winfo_height()), xpos, ypos))
+
         
     else:
-        rootwin.geometry('%dx%d+%d+%d' % (ribbon.winfo_width(), 150, rootwin.winfo_screenwidth(), rootwin.winfo_screenheight()))
+        rootwin.geometry('%dx%d+%d+%d' % (ribbon.winfo_width(), 150, xpos, ypos))
     
 ## Link PDF of paper to reference #
 def linkpdf(event):
@@ -1254,6 +1250,10 @@ def cite(event=None):
         rootwin.clipboard_append(x)
     for x in t["HReference"].tail(1):
          messagebox.showinfo(title="Sucessfully Cited", message=x)
+    for x in t["HCitation"].tail(1):
+        citation.set(x)
+        sync_cite()
+        copyend()
     citewin.withdraw()
          
     reset()
@@ -1353,24 +1353,41 @@ def areyousure(com,word):
     else:
         pass
 
-def megamode(event=None):
-    global megawin
-    megawin=Tk()
-    megawin.title("Mega Mode")
-    megawin.configure(bg=bgcolor)
-    megaprojdrop=makedrop(projects,curproj,change_proj,megawin,0,0)
-    megaprojdrop.set(curproj.get())
-    citelist=Listbox(megawin,bg=accentcolor2,relief="flat",highlightthickness=0,width=50)
-    citelist.grid(row=1,column=0)
-    for x in t[t["Project"]==projdrop.get()]["HCitation"]:
-        citelist.insert(END,x)
+#def hide/ unhide old projects
+def hide_list():
+    print(projdrop.get())
+    t.loc[t["Project"] == projdrop.get(), "hidden"] = "True"
+    t.to_csv('ref.csv',sep=";")
+    list_projects()
+    list_citations()
+
+def unhide(event=None):
+    for i in projlist.curselection():
+        print(t[t["Project"] == projlist.get(i)]["Project"])
+        t.loc[t["Project"] == projlist.get(i), "hidden"] = "False"
+        t.to_csv('ref.csv',sep=";")
+        list_projects()
+        curproj.set(projlist.get(i))
         
-    
-    
+        list_citations()
+        projlist.delete(i)
+        
+        
+def unhide_win():
+    global projlist
+    unhidewin=Tk()
+    unhidewin.title("Hidden Projects. Double click to unhide.")
+    unhidewin.configure(bg=bgcolor)
+    projlist=Listbox(unhidewin,bg=accentcolor2,relief="flat",highlightthickness=0,width=50)
+    projlist.pack()
+    for x in t[t["hidden"] == "True"]["Project"].unique():
+        projlist.insert(END,x)
+    projlist.bind("<Double-1>",unhide)
 
 
 
-
+def move_citation(event=None):
+    pass
     
 ## Make menu bar##
 
@@ -1502,6 +1519,10 @@ def posribbon(window):
     uniicon=makeicon('uni-icon')
     begicon=makeicon('backicon')
     endicon=makeicon('endicon')
+    qicon=makeicon('qicon')
+    hideicon=makeicon('hideicon')
+    showicon=makeicon('showicon')
+    moveicon=makeicon('exporticon')
 
     #mod add path to new icon here
 
@@ -1513,18 +1534,25 @@ def posribbon(window):
     {"image":txticon,"name":"Open list as .txt","short":"<Control-o>","command":export_as_txt,"menu":opengroup, "row":0,"col":0},
     {"image":csvicon,"name":"Open list as .csv","short":"<Control-O>","command":export_as_csv,"menu":opengroup, "row":1,"col":0},
     {"image":mastericon,"name":"Open master sheet","short":"<Control-M>","command":openmaster,"menu":opengroup, "row":1,"col":1},
+    {"image":hideicon,"name":"Hide Project","short":"<Control-M>","command":hide_list,"menu":opengroup, "row":0,"col":3},
+    {"image":showicon,"name":"Show Project","short":"<Control-M>","command":unhide_win,"menu":opengroup, "row":0,"col":4},
     #{"image":wordicon,"name":"Open Project","short":None,"command":openfile,"menu":projgroup, "row":1,"col":0},
     #{"image":switchicon,"name":"Change Project File","short":None,"command":changefile,"menu":projgroup, "row":1,"col":1},
 
     {"image":searchicon,"name":"Find","short":"<Control-f>","command":search,"menu":sortgroup, "row":1,"col":100},
+
     {"image":editicon,"name":"Edit","short":None,"command":edit,"menu":editgroup, "row":1,"col":0},
+    {"image":delicon,"name":"Delete citation","short":None,"command":ask_delref,"menu":editgroup, "row":0,"col":0},
+    {"image":moveicon,"name":"Move citation to a different project","short":None,"command":move_citation,"menu":editgroup, "row":0,"col":1},
+    
     {"image":copyreficon,"name":"Copy full reference","short":None,"command":copyref,"menu":copygroup, "row":0,"col":0},
     {"image":copyciteicon,"name":"Copy citation","short":None,"command":copycite,"menu":copygroup, "row":0,"col":1},
     #{"image":italicicon,"name":"Copy with Italic MD formatting","short":None,"command":copycitelink,"menu":copygroup, "row":1,"col":2},
     {"image":begicon,"name":"Copy with MD formatting","short":None,"command":copybeg,"menu":copygroup, "row":1,"col":0},
     {"image":endicon,"name":"Copy with MD formatting","short":None,"command":copyend,"menu":copygroup, "row":1,"col":1},
+    {"image":qicon,"name":"Citation Needed","short":None,"command":citation_needed,"menu":copygroup, "row":1,"col":3},
     #{"image":copyindexicon,"name":"Copy index number","short":None,"command":copyindex,"menu":copygroup, "row":1,"col":1},
-    {"image":delicon,"name":"Delete citation","short":None,"command":ask_delref,"menu":editgroup, "row":0,"col":0},
+    
     {"image":urlicon,"name":"Open paper URL","short":"<Control-u>","command":open_url,"menu":papergroup, "row":0,"col":0},
     {"image":pdficon,"name":"Open paper PDF","short":"<Control-p>","command":open_pdf,"menu":papergroup, "row":1,"col":0},
     {"image":sortupicon,"name":"Newest First","short":None,"command":sort_newest,"menu":sortgroup, "row":0,"col":0},
@@ -1545,8 +1573,8 @@ def posribbon(window):
     {"image":uniicon,"name":"Cite new dissertation","short":None,"command":None,"menu":citegroup, "row":1,"col":5},
     {"image":writeicon,"name":"Write to file","short":"<Control-Return>","command":cite,"menu":writegroup, "row":1,"col":0},
     {"image":soundicon,"name":"Read out loud","short":None,"command":proofread,"menu":proofgroup, "row":0,"col":0},
-    {"image":usedicon,"name":"Check for unused citations","short":None,"command":check_unused,"menu":proofgroup, "row":1,"col":0},
-    {"image":maximiseicon,"name":"Mega mode","short":None,"command":megamode,"menu":settingstab, "row":1,"col":0}]
+    {"image":usedicon,"name":"Check for unused citations","short":None,"command":check_unused,"menu":proofgroup, "row":1,"col":0}]
+    
         
     #mod add new button here
 
