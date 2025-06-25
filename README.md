@@ -1,4 +1,4 @@
-# A Python Based Citation Management System for Linux
+# A Python Based Citation Management System for Linux & Windows
 This is a utility designed to fully automate referencing in academic writing. It automates the formatting of citation syntax and then stores them for easy access
 It is specifically tuned to exactly match the style of Harvard used by the University of Sheffield. <br>
 
@@ -49,7 +49,5 @@ Currently supported media types:
 # Proofreading features
 * Check your document for sources that have been cited but not mentioned
 * Convert your document to an MP3 for proofreading
-
-# Windows version coming soon!
 
 
