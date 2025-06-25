@@ -36,7 +36,9 @@ def getpackages():
                 os.system("pip install "+i+" --break-system-packages")
                 
         else:
-            os.system("pip install "+i)
+            for i in packages:
+                pass
+                #os.system("pip install "+i)
         r=open("runbefore.run","a")
         r.close()
 getpackages()
@@ -65,12 +67,12 @@ def load():
 
     except:
         data={"Access":[True],
-        "Project":["Panspermia"],
-        "Surname0":["Sample"],
+        "Project":["Sample Project"],
+        "Surname0":["McFarlane"],
         "Surname1":[""],
         "Surname2":[""],
         "Surname3":[""],
-        "Initial0":["T"],
+        "Initial0":["J"],
         "Initial1":[""],
         "Initial2":[""],
         "Initial3":[""],
@@ -88,21 +90,24 @@ def load():
         "Chap_Surname1":[""],
         "Chap_Surname2":[""],
         "Chap_Surname3":[""],
+        "Chap_Surname4":[""],
+        "Chap_Surname5":[""],
         "Chap_Initial0":["T"],
         "Chap_Initial1":[""],
         "Chap_Initial2":[""],
         "Chap_Initial3":[""],
         "Chap_Initial4":[""],
+        "Chap_Initial5":[""],
         "Chap_Title":["The Misty Mountains"],
 
 
-        "Surnames":["Sample"],
-        "Initials":["T"],
+        "Surnames":["McFarlane"],
+        "Initials":["J"],
         "AuthorCount":[1],
         "ChapCount":[0],
         "EdCount":[0],
         "Media":["book"],
-        "Title":["Testing"],
+        "Title":["Sample Title"],
         "Edition":[1],
         "Publisher":["Example University Press"],
         "CityOfPub":["Samplestan"],
@@ -125,7 +130,8 @@ def load():
         "CommMethod":[""],
         "Receiver":[""],
         "prep":[""],
-        "study level":[""]}
+        "study level":[""],
+        "hidden":["False"]}
         #mod add new fields to this list
         
         
@@ -287,6 +293,8 @@ def newproj(event=None):
     projdrop.focus_set()
     projdrop.delete(0,END)
     list_citations()
+  
+
     
 def nonewproj(event=None):
     for x in t.loc[t["Title"]==refdrop.get()]["Project"]:
@@ -299,12 +307,15 @@ def nonewproj(event=None):
 def askdel():
     areyousure(delproject,"project")
 def delproject():
-
-    todel = t[ t['Project'] == str(cur_proj())].index
-    t.drop(todel,inplace=True)
-    t.to_csv('ref.csv',sep=";")
-    load()
-    list_projects()
+    
+    if len(t["Project"].unique())<2:
+        messagebox.showerror(title="Error", message="There must be at least one project.")
+    else:
+        todel = t[ t['Project'] == str(cur_proj())].index
+        t.drop(todel,inplace=True)
+        t.to_csv('ref.csv',sep=";")
+        load()
+        list_projects()
 
 ## List of projects#
 def change_proj(event=None):
@@ -334,7 +345,10 @@ def makedrop(List,var,function,position,r,c):
         drop=ttk.Combobox(position,textvariable=var,width=50,font=dropstyle)
         drop.bind("<<ComboboxSelected>>", function)
         drop['values'] = List
-        var.set(List[0])
+        try:
+            var.set(List[0])#
+        except:
+            pass
         drop.grid(row=r,column=c,sticky="w")
         return drop
 
@@ -357,7 +371,7 @@ def list_projects():
         projdrop.destroy()
    
 
-    projdrop=makedrop(projects,curproj,change_proj,rootwin,2,1)
+    projdrop=makedrop(projects,curproj,change_proj,listgroup,0,0)
     for x in ["A",'B','C','D','E','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','a','b','c','d','e','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']:
         projdrop.bind("<"+x+">", lambda event: list_citations())
     projdrop.bind("<Escape>", nonewproj)
@@ -439,7 +453,7 @@ def sync_ref(event=None):
 def platopen(i): #platdep
     if getos()=="linux":
         command=('xdg-open "'+str(i)+'"')
-    else:
+    elif getos()=="win":
         command='"'+str(i)+'"'
     os.system(command)
     print(command)
@@ -461,7 +475,12 @@ def export_as_txt(event=None):
 def openmaster(event=None):
     x="Opening backend database for manual editing. \nRemoving data may permanently break the database. \nThis should only be used to correct data entry mistakes. \nTo export an independent reference list, use the export tools on the file tab.\n\nRefBuddy uses semicolons as the field deliminator, but Excel will assume that it is separated by commas - be sure to change this."
     messagebox.showwarning(title="Proceed with caution", message=x)
-    os.system("xdg-open ref.csv")
+
+    if getos()=="linux": #platdep
+        os.system("xdg-open ref.csv")
+    elif getos()=="win":
+        os.system("ref.csv")
+    
 
 #copy citations to clipbaord
 def copyref(): #copy whole reference
@@ -540,10 +559,16 @@ def makewin(event=None):
     global ypos
     rootwin=Tk() 
     rootwin.title("Referencing")    
-    #rootwin.attributes("-alpha", 0)
-    rootwin.wm_attributes('-type', 'splash')
-    ypos=rootwin.winfo_screenheight()
-    xpos=rootwin.winfo_screenwidth()
+    rootwin.attributes("-alpha", 0.9)
+    if getos()=="linux": #platdep
+        rootwin.wm_attributes('-type', 'splash')
+        ypos=rootwin.winfo_screenheight()
+        xpos=rootwin.winfo_screenwidth()
+    elif getos()=="win":
+        #rootwin.attributes('-toolwindow', True)
+        rootwin.overrideredirect(1)
+        ypos=rootwin.winfo_screenheight()*0.92
+        xpos=rootwin.winfo_screenwidth()*0.9
     rootwin.geometry('%dx%d+%d+%d' % (500, 125, xpos, ypos))
 
 
@@ -731,8 +756,12 @@ def makecitewin():
 
     
     citewin=Tk()
-    citewin.attributes('-alpha',0.5)
+    citewin.attributes('-alpha',0.7)
     citewin.title("Cite new")
+    if getos()=="linux":
+        citewin.wm_attributes('-type', 'splash')
+    elif getos()=="win":
+        citewin.overrideredirect(1)
     
     tlabel=Label(citewin,text="",bg=bgcolor,font=labelstyle)
     tlabel.grid(row=0,column=0)
@@ -741,7 +770,7 @@ def makecitewin():
     
     citewin.configure(bg=bgcolor)
     citewin.wm_attributes("-topmost", True)
-    #citewin.wm_attributes('-type', 'splash')
+    
     #rootwin.geometry('%dx%d+%d+%d' % (500, 125, xpos, rootwin.winfo_screenheight()))
     #citewin.focus_force()
 
@@ -884,11 +913,14 @@ def edit(event=None):
             
 
 def minimise(event=None):
+
+    if getos()=="linux":
+        height=25
+    elif getos()=="win":
+        height=30
     try:
         if (rootwin.focus_get()) is None:
-    
-            
-            rootwin.geometry('%dx%d+%d+%d' % (150, 25, xpos, ypos))
+            rootwin.geometry('%dx%d+%d+%d' % (150, height, xpos, ypos))
             rootwin.wm_attributes("-topmost", True)
     except:
         pass
@@ -897,13 +929,16 @@ def maximise(event=None):
     rootwin.wm_attributes("-topmost", True)
     #rootwin.geometry('%dx%d+%d+%d' % (ribbon.winfo_width(), int(ribbon.winfo_height()), rootwin.winfo_screenwidth(), rootwin.winfo_screenheight()))
 
-    
-    if (ribbon.tab(ribbon.select(), "text"))=="💬":
-        rootwin.geometry('%dx%d+%d+%d' % (ribbon.winfo_width(), int(ribbon.winfo_height()), xpos, ypos))
-
-        
-    else:
-        rootwin.geometry('%dx%d+%d+%d' % (ribbon.winfo_width(), 150, xpos, ypos))
+    if getos()=="linux":
+        if (ribbon.tab(ribbon.select(), "text"))=="💬":
+            rootwin.geometry('%dx%d+%d+%d' % (ribbon.winfo_width(), int(ribbon.winfo_height()), xpos, ypos))
+        else:
+            rootwin.geometry('%dx%d+%d+%d' % (ribbon.winfo_width(), 150, xpos, ypos))
+    elif getos()=="win":
+        if (ribbon.tab(ribbon.select(), "text"))=="💬":
+            rootwin.geometry('%dx%d+%d+%d' % (ribbon.winfo_width(), int(ribbon.winfo_height()), xpos*0.6, ypos*0.8))
+        else:
+            rootwin.geometry('%dx%d+%d+%d' % (ribbon.winfo_width(), 150, xpos*0.6, ypos*0.8))
     
 ## Link PDF of paper to reference #
 def linkpdf(event):
@@ -1257,6 +1292,7 @@ def cite(event=None):
     citewin.withdraw()
          
     reset()
+    list_projects()
 
 ## Check for any citations that have been cited in Ref Buddy but haven't been used in the project #
 def check_unused(): #find project file and convert to txt
@@ -1453,7 +1489,7 @@ def posribbon(window):
     
     searchgroup=makegroup(citationtab,"Search",0,50)
     opengroup=makegroup(citationtab,"Open List",0,60)
-    listgroup=makegroup(citationtab,"Citations",1,0)
+    listgroup=makegroup(citationtab,"",1,0)
     listgroup.grid(row=1,column=0,padx=10,pady=10,columnspan=1000)
 
     citegroup=makegroup(citetab,"Cite New",0,10)
