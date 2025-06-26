@@ -964,8 +964,11 @@ def open_pdf(event=None):
 def open_url(event=None):
     x=""
     for x in t[t["Title"]==cur_ref()]["URL"]:
-        
-        platopen(str(x))
+        if get_os()=="linux": 
+            os.system(x)
+        elif get_os()=="win":
+            os.system(f"start {x}")
+       
 
 ## Clear boxes after media has been cited #
 def reset(event=None):
