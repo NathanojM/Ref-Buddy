@@ -55,6 +55,7 @@ import pypandoc
 import time
 import threading
 from idlelib.tooltip import Hovertip
+import screeninfo
 
 ##Either read in the existing database or make a new one from scratch
 def load(): 
@@ -557,18 +558,29 @@ def makewin(event=None):
     global rootwin
     global xpos
     global ypos
+    global mxpos
+    global mypos
     rootwin=Tk() 
     rootwin.title("Referencing")    
     rootwin.attributes("-alpha", 0.9)
-    if getos()=="linux": #platdep
-        rootwin.wm_attributes('-type', 'splash')
-        ypos=rootwin.winfo_screenheight()
-        xpos=rootwin.winfo_screenwidth()
-    elif getos()=="win":
-        #rootwin.attributes('-toolwindow', True)
+    rootwin.wm_attributes('-type', 'splash')
+    if getos() == "linux":  # platdep
+   
+        for m in screeninfo.get_monitors():
+            if m.is_primary:
+              
+                xpos = m.x + m.width - 150  # 500 is window width
+                ypos = m.y + m.height - 30  # 125 is window height
+                mxpos = m.x + m.width - 700  # 500 is window width
+                mypos = m.y + m.height - 125  # 125 is window height
+               
+                
+        
+        
+    elif getos() == "win":
         rootwin.overrideredirect(1)
-        ypos=rootwin.winfo_screenheight()*0.92
-        xpos=rootwin.winfo_screenwidth()*0.9
+        xpos = int(rootwin.winfo_screenwidth() - 500)
+        ypos = int(rootwin.winfo_screenheight() - 125)
     rootwin.geometry('%dx%d+%d+%d' % (500, 125, xpos, ypos))
 
 
@@ -778,6 +790,8 @@ def makecitewin():
     closebtn.grid(row=0,column=1000,sticky="e")
     #citewin.bind("<FocusIn>",maximise)
     #citewin.overrideredirect(1)
+    inslabel=Label(citewin,text="* Press INS to add another author",bg=bgcolor,font=labelstyle)
+    inslabel.grid(row=1000,column=0,sticky="w",columnspan=2)
     
 def closecitewin(event=None):
     citewin.withdraw()
@@ -927,18 +941,15 @@ def minimise(event=None):
     
 def maximise(event=None):
     rootwin.wm_attributes("-topmost", True)
-    #rootwin.geometry('%dx%d+%d+%d' % (ribbon.winfo_width(), int(ribbon.winfo_height()), rootwin.winfo_screenwidth(), rootwin.winfo_screenheight()))
-
+    
     if getos()=="linux":
-        if (ribbon.tab(ribbon.select(), "text"))=="💬":
-            rootwin.geometry('%dx%d+%d+%d' % (ribbon.winfo_width(), int(ribbon.winfo_height()), xpos, ypos))
-        else:
-            rootwin.geometry('%dx%d+%d+%d' % (ribbon.winfo_width(), 150, xpos, ypos))
+        
+        rootwin.geometry('%dx%d+%d+%d' % (ribbon.winfo_width(), int(ribbon.winfo_height()), mxpos, mypos))
+        
     elif getos()=="win":
-        if (ribbon.tab(ribbon.select(), "text"))=="💬":
-            rootwin.geometry('%dx%d+%d+%d' % (ribbon.winfo_width(), int(ribbon.winfo_height()), xpos*0.6, ypos*0.8))
-        else:
-            rootwin.geometry('%dx%d+%d+%d' % (ribbon.winfo_width(), 150, xpos*0.6, ypos*0.8))
+  
+        rootwin.geometry('%dx%d+%d+%d' % (ribbon.winfo_width(), int(ribbon.winfo_height()), xpos*0.6, ypos*0.8))
+       
     
 ## Link PDF of paper to reference #
 def linkpdf(event):
