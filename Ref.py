@@ -1,10 +1,10 @@
-
 '''
 Citation management system, adapted to Sheffield's flavor of Harvard.
 It's easy to add new media types. Places where it's necessary to modify the code are marked with #mod
 #platdep indicates bits which are platform dependent
 '''
 import os
+
 
 #Check what platform is being used #platdep
 def getos():
@@ -462,7 +462,8 @@ def platopen(i): #platdep
 ## Export reference list##
 def export_as_csv(event=None):
     pd.set_option('display.max_colwidth', None)
-    export_table=(t[t["Project"]==cur_proj()][["HCitation","HReference"]])
+    print(t.columns)
+    export_table=(t[t["Project"]==cur_proj()][["HCitation","HReference","URL"]])
     export_table.to_csv('reflistcsv.csv',sep=";",index=False)
     platopen("reflistcsv.csv")
 
@@ -975,9 +976,9 @@ def open_pdf(event=None):
 def open_url(event=None):
     x=""
     for x in t[t["Title"]==cur_ref()]["URL"]:
-        if get_os()=="linux": 
-            os.system(x)
-        elif get_os()=="win":
+        if getos()=="linux": 
+            os.system(f"xdg-open {x}")
+        elif getos()=="win":
             os.system(f"start {x}")
        
 
@@ -993,6 +994,7 @@ def reset(event=None):
   
 ## Assemble the citation into the right syntax#
 def assemble():
+    
     
     global t
     #global year
@@ -1018,6 +1020,7 @@ def assemble():
     #issue=makedec("Issue")
     issue=s("Issue")
     title=s("Title")
+    
 
 
     book=" ("+year+") "+title+". "+ed+" edn. "+s("CityOfPub")+": "+s("Publisher")+"."
